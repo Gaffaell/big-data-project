@@ -71,116 +71,148 @@ with c1:
         st.rerun()
 
 
-st.title("🎫 Support tickets")
+# O FRONT END TEM QUE FAZER A MELHOR FORMA E MAIS DINAMICA DE 
+# EXPOR APENAS OS DADOS RELEVANTES E COMPARA LOS DE UMA FORMA QUE O CLIENTE
+# CONSIGA ENTENDER. JÁ DEIXAR PRONTO ENQUANTO FAZEMOS A NOSSA PARTE SIMULTANEAMENTE
+#
+# dados: de movimentação: saída, entrada, lucro; dividos por categorias; dividor por mês, ano, etc
+# itens: que mais sairam, menos sairam, a comprar, causaram prejuízo; divido por categoria
+# cliente: ultimo mes, ultimo ano, ultima semana, media geral, localizações, faixa etaria, genero
+# --  media de gastos, frequncia de compra, metodo de compra preferido
+# animais: ultimo mes, ultimo ano, ultima semana, media geral, categoria, porte, idade, raça 
+# *** engajamento: ENGAJAMENTO REDES SOCIAIS, REDES SOCIAIS ATIVAS, CURTIDAS TOTAIS INSTAGRAM, CURTIDAS TOTAIS TIKTOK  
+# *** POSTAGENS: POR MES, CLIQUES NO SITE POR MES, CLIENTES QUE ENTRARAM PELAS REDES SOCIAIS, CLIENTES QUE ENTRARAM DIRETAMENTE PELO WHATSAPP 
+# -- CLIENTES QUE COMPRARAM DAS REDES SOCIAIS, VIDEOS POSTADOS, POSTAGENS REALIZADAS 
+# *** ENGAJAMENTO CARROSSEL, ENGAJAMETO VIDEO , ENGAJAMENTO FOTOS , ENGAJAMENTO STORIES 
+# *** INVESTIMENTO MENSAL EM MARKETING DIGITAL , CLIQUES/REAL, VENDAS/REAL
+# *** Taxa de conversão (quantos cliques resultaram em compras). Custo por aquisição (CPA) por canal.
+# -- Horários de maior engajamento (para otimizar posts). Taxa de retenção ou seguidores ativos (não só curtidas).
+# -- Comparativo mês a mês de desempenho das postagens. MENÇOES NAS REDES SOCIAIS 
+
+# Show app title and description.
+st.set_page_config(page_title="Support tickets", page_icon="🎫")
+st.title("👤 Gerenciador de perfis de clientes")
 st.write(
     """
-    This app shows how you can build an internal tool in Streamlit. Here, we are 
-    implementing a support ticket workflow. The user can create a ticket, edit 
-    existing tickets, and view some statistics.
+    Este aplicativo é um gerenciador de perfis de clientes. Nele, é possível editar 
+    clientes existentes e ver estatísticas.
     """
 )
 
-# Dataframe em sessão
-if "df" not in st.session_state:
-    np.random.seed(42)
-    issue_descriptions = [
-        "Network connectivity issues in the office",
-        "Software application crashing on startup",
-        "Printer not responding to print commands",
-        "Email server downtime",
-        "Data backup failure",
-        "Login authentication problems",
-        "Website performance degradation",
-        "Security vulnerability identified",
-        "Hardware malfunction in the server room",
-        "Employee unable to access shared files",
-        "Database connection failure",
-        "Mobile application not syncing data",
-        "VoIP phone system issues",
-        "VPN connection problems for remote employees",
-        "System updates causing compatibility issues",
-        "File server running out of storage space",
-        "Intrusion detection system alerts",
-        "Inventory management system errors",
-        "Customer data not loading in CRM",
-        "Collaboration tool not sending notifications",
-    ]
-    data = {
-        "ID": [f"TICKET-{i}" for i in range(1100, 1000, -1)],
-        "Issue": np.random.choice(issue_descriptions, size=100),
-        "Status": np.random.choice(["Open", "In Progress", "Closed"], size=100),
-        "Priority": np.random.choice(["High", "Medium", "Low"], size=100),
-        "Date Submitted": [
-            datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
-            for _ in range(100)
-        ],
-    }
-    st.session_state.df = pd.DataFrame(data)
+data = { # aqui vai dados do banco de dados para mostrar na tela
+    #"ID": [f"TICKET-{i}" for i in range(1100, 1000, -1)],
+    #"Status": np.random.choice(["Open", "In Progress", "Closed"], size=100),
+    #"Priority": np.random.choice(["High", "Medium", "Low"], size=100),
+    #"Date Submitted": [
+    #    datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
+    #    for _ in range(100)
+    #],
+#       pegar esses dados do banco de dados para montrar na tela
 
-# Add ticket
-st.header("Add a ticket")
+    "ID": [f"TICKET-{i}" for i in range(1100, 1000, -1)],
+    "Nome": np.random.choice(["Rafael", "Gabriel", "Daniel", "Miguel"], size=100),
+    "CPF": "123,456,789,12",
+    "Bairro": np.random.choice(["Marambaia", "Sacramenta", "Batista campos", "Reduto"], size=100),
+    "CEP": "12345678",
+    "Endereco": "Rua dos bobos",
+    "Numero": "0",
+    "Email": "rafael@gmail.com",
+    "Date Submitted": [
+        datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
+        for _ in range(100)
+    ],
+}
+df = pd.DataFrame(data)
+
+# Save the dataframe in session state (a dictionary-like object that persists across
+# page runs). This ensures our data is persisted when the app updates.
+st.session_state.df = df
+
+
+# -------------------------------------------------------------------------------------------------
+# adicionar um novo cliente no banco de dados
+
+# Show a section to add a new ticket.
+st.header("Adicionar um novo cliente") 
+
+# We're adding tickets via an `st.form` and some input widgets. If widgets are used
+# in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_ticket_form"):
-    issue = st.text_area("Describe the issue")
-    priority = st.selectbox("Priority", ["High", "Medium", "Low"])
+    nome = st.text_area("Nome")
+    CPF = st.text_area("CPF")
+    bairro = st.text_area("Bairro")
+    endereco = st.text_area("Endereço")
+    CEP = st.text_area("CEP")
+    numero = st.text_area("Numero do endereço")
     submitted = st.form_submit_button("Submit")
 
 if submitted:
-    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1])
-    today = datetime.datetime.now().strftime("%m-%d-%Y")
-    df_new = pd.DataFrame(
+    # Make a dataframe for the new ticket and append it to the dataframe in session
+    # state.
+    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1]) # vai pegar o id do banco de dados
+    today = datetime.datetime.now().strftime("%d-%m-%Y")
+    df = pd.DataFrame(
         [
             {
-                "ID": f"TICKET-{recent_ticket_number+1}",
-                "Issue": issue,
-                "Status": "Open",
-                "Priority": priority,
+                "ID": f"TICKET-{recent_ticket_number+1}", # vai pegar o id do banco de dados
+                "Date Submitted": today,
+                "Nome": nome,
+                "CPF": CPF,
+                "Bairro": bairro,
+                "Endereco": endereco,
+                "CEP": CEP,
+                "Numero": numero,
                 "Date Submitted": today,
             }
         ]
     )
-    st.write("Ticket submitted! Here are the ticket details:")
-    st.dataframe(df_new, use_container_width=True, hide_index=True)
-    st.session_state.df = pd.concat([df_new, st.session_state.df], axis=0)
 
-# Edit/view
-st.header("Existing tickets")
-st.write(f"Number of tickets: `{len(st.session_state.df)}`")
-st.info(
-    "You can edit the tickets by double clicking on a cell. Note how the plots below "
-    "update automatically! You can also sort the table by clicking on the column headers.",
-    icon="✍️",
-)
-edited_df = st.data_editor(
+    # Show a little success message.
+    st.write("Ticket submitted! Here are the ticket details:")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.session_state.df = pd.concat([df, st.session_state.df], axis=0)
+
+# -----------------------------------------------------------------------------------------------------------
+# mostra todos os clientes cadastrados
+# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# cells. The edited data is returned as a new dataframe.
+
+# Show section to view and edit existing tickets in a table.
+st.header("Clientes cadastrados")
+
+# Show section to view and edit existing tickets in a table.
+#st.info(
+#    "You can edit the tickets by double clicking on a cell. Note how the plots below "
+#    "update automatically! You can also sort the table by clicking on the column headers.",
+#    icon="✍️",
+#
+#"""
+
+# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# cells. The edited data is returned as a new dataframe.
+df_new = st.data_editor(
     st.session_state.df,
     use_container_width=True,
     hide_index=True,
-    column_config={
-        "Status": st.column_config.SelectboxColumn(
-            "Status",
-            help="Ticket status",
-            options=["Open", "In Progress", "Closed"],
-            required=True,
-        ),
-        "Priority": st.column_config.SelectboxColumn(
-            "Priority",
-            help="Priority",
-            options=["High", "Medium", "Low"],
-            required=True,
-        ),
-    },
+    # Disable editing the ID and Date Submitted columns.
     disabled=["ID", "Date Submitted"],
 )
 
-# Stats
+# -------------------------------------------------------------------------------------------------------------
+# parte para mostrar grafico e estatisticas
+ # Show some metrics and charts about the ticket.
 st.header("Statistics")
-col1, col2, col3 = st.columns(3)
-num_open_tickets = len(st.session_state.df[st.session_state.df.Status == "Open"])
-col1.metric(label="Number of open tickets", value=num_open_tickets, delta=10)
-col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
-col3.metric(label="Average resolution time (hours)", value=16, delta=2)
 
+# Show metrics side by side using `st.columns` and `st.metric`.
+col1, col2, col3 = st.columns(3)
+num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
+col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
+#col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
+#col3.metric(label="Average resolution time (hours)", value=16, delta=2)
+
+# Show two Altair charts using `st.altair_chart`.
 st.write("")
-st.write("##### Ticket status per month")
+st.write("")
 status_plot = (
     alt.Chart(edited_df)
     .mark_bar()
@@ -190,16 +222,20 @@ status_plot = (
         xOffset="Status:N",
         color="Status:N",
     )
-    .configure_legend(orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5)
+    .configure_legend(
+        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+    )
 )
 st.altair_chart(status_plot, use_container_width=True, theme="streamlit")
 
-st.write("##### Current ticket priorities")
+st.write("")
 priority_plot = (
     alt.Chart(edited_df)
     .mark_arc()
     .encode(theta="count():Q", color="Priority:N")
     .properties(height=300)
-    .configure_legend(orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5)
+    .configure_legend(
+        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+    )
 )
 st.altair_chart(priority_plot, use_container_width=True, theme="streamlit")
