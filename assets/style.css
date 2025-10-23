@@ -1,0 +1,16 @@
+
+.block-container { padding-top: 6vh; }
+
+.login-card {
+  background: var(--secondary-background-color, #1a2035);
+  padding: 2.2rem;
+  border-radius: 18px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  max-width: 420px;
+  margin: 0 auto;
+}
+.login-card h1, .login-card p { text-align: center; margin-bottom: .75rem; }
+.small-links {
+  display:flex; justify-content:space-between; align-items:center;
+  font-size:.9rem; opacity:.9; margin-top:.25rem;
+}
