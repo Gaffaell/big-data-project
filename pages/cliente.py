@@ -6,35 +6,17 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Você precisa fazer o login para acessar esta página!")
-    st.stop()
-
-# O FRONT END TEM QUE FAZER A MELHOR FORMA E MAIS DINAMICA DE 
-# EXPOR APENAS OS DADOS RELEVANTES E COMPARA LOS DE UMA FORMA QUE O CLIENTE
-# CONSIGA ENTENDER. JÁ DEIXAR PRONTO ENQUANTO FAZEMOS A NOSSA PARTE SIMULTANEAMENTE
-#
-# dados: de movimentação: saída, entrada, lucro; dividos por categorias; dividor por mês, ano, etc
-# itens: que mais sairam, menos sairam, a comprar, causaram prejuízo; divido por categoria
-# cliente: ultimo mes, ultimo ano, ultima semana, media geral, localizações, faixa etaria, genero
-# --  media de gastos, frequncia de compra, metodo de compra preferido
-# animais: ultimo mes, ultimo ano, ultima semana, media geral, categoria, porte, idade, raça 
-# *** engajamento: ENGAJAMENTO REDES SOCIAIS, REDES SOCIAIS ATIVAS, CURTIDAS TOTAIS INSTAGRAM, CURTIDAS TOTAIS TIKTOK  
-# *** POSTAGENS: POR MES, CLIQUES NO SITE POR MES, CLIENTES QUE ENTRARAM PELAS REDES SOCIAIS, CLIENTES QUE ENTRARAM DIRETAMENTE PELO WHATSAPP 
-# -- CLIENTES QUE COMPRARAM DAS REDES SOCIAIS, VIDEOS POSTADOS, POSTAGENS REALIZADAS 
-# *** ENGAJAMENTO CARROSSEL, ENGAJAMETO VIDEO , ENGAJAMENTO FOTOS , ENGAJAMENTO STORIES 
-# *** INVESTIMENTO MENSAL EM MARKETING DIGITAL , CLIQUES/REAL, VENDAS/REAL
-# *** Taxa de conversão (quantos cliques resultaram em compras). Custo por aquisição (CPA) por canal.
-# -- Horários de maior engajamento (para otimizar posts). Taxa de retenção ou seguidores ativos (não só curtidas).
-# -- Comparativo mês a mês de desempenho das postagens. MENÇOES NAS REDES SOCIAIS 
+#if "authenticated" not in st.session_state or not st.session_state.authenticated:
+#    st.warning("Você precisa fazer o login para acessar esta página!")
+#    st.stop()
 
 # Show app title and description.
-st.set_page_config(page_title="Gerenciado de clientes", page_icon="🎫")
-st.title("👤 Gerenciador de perfis de clientes")
+st.set_page_config(page_title="Gerenciador de clientes", page_icon="🎫")
+st.title("👤 Gerenciador de clientes")
 st.write(
     """
-    Este aplicativo é um gerenciador de perfis de clientes. Nele, é possível editar 
-    clientes existentes e ver estatísticas.
+    Este aplicativo é um gerenciador de perfis de clientes. Nele, é possível cadastrar 
+    novos clientes, ver todos os clientes e ver estatísticas.
     """
 )
 
@@ -76,13 +58,14 @@ st.header("Adicionar um novo cliente")
 
 # We're adding tickets via an `st.form` and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
-with st.form("add_ticket_form"):
-    nome = st.text_area("Nome")
-    CPF = st.text_area("CPF")
-    bairro = st.text_area("Bairro")
-    endereco = st.text_area("Endereço")
-    CEP = st.text_area("CEP")
-    numero = st.text_area("Numero do endereço")
+with st.form("add_cliente"):
+    nome = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
+    CPF = st.text_area("CPF", placeholder="Ex: 123.456.789.10", height=50, max_chars=14)
+    email = st.text_area("Email", placeholder="Ex: cliente@gmail.com", height=50, max_chars=50)
+    bairro = st.text_area("Bairro", placeholder="Ex: marambaia", height=50, max_chars=50)
+    endereco = st.text_area("Endereço", placeholder="Ex: travessa julio cesar", height=50, max_chars=50)
+    CEP = st.text_area("CEP", placeholder="12345-678", height=50, max_chars=9)
+    numero = st.text_area("Numero do endereço", placeholder="Ex: 78B", height=50, max_chars=10)
     submitted = st.form_submit_button("Submit")
 
 if submitted:
@@ -97,6 +80,7 @@ if submitted:
                 "Date Submitted": today,
                 "Nome": nome,
                 "CPF": CPF,
+                "Email": email,
                 "Bairro": bairro,
                 "Endereco": endereco,
                 "CEP": CEP,
