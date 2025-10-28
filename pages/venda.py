@@ -10,31 +10,13 @@ import streamlit as st
 #    st.warning("Você precisa fazer o login para acessar esta página!")
 #    st.stop()
 
-# O FRONT END TEM QUE FAZER A MELHOR FORMA E MAIS DINAMICA DE 
-# EXPOR APENAS OS DADOS RELEVANTES E COMPARA LOS DE UMA FORMA QUE O CLIENTE
-# CONSIGA ENTENDER. JÁ DEIXAR PRONTO ENQUANTO FAZEMOS A NOSSA PARTE SIMULTANEAMENTE
-#
-# dados: de movimentação: saída, entrada, lucro; dividos por categorias; dividor por mês, ano, etc
-# itens: que mais sairam, menos sairam, a comprar, causaram prejuízo; divido por categoria
-# cliente: ultimo mes, ultimo ano, ultima semana, media geral, localizações, faixa etaria, genero
-# --  media de gastos, frequncia de compra, metodo de compra preferido
-# animais: ultimo mes, ultimo ano, ultima semana, media geral, categoria, porte, idade, raça 
-# *** engajamento: ENGAJAMENTO REDES SOCIAIS, REDES SOCIAIS ATIVAS, CURTIDAS TOTAIS INSTAGRAM, CURTIDAS TOTAIS TIKTOK  
-# *** POSTAGENS: POR MES, CLIQUES NO SITE POR MES, CLIENTES QUE ENTRARAM PELAS REDES SOCIAIS, CLIENTES QUE ENTRARAM DIRETAMENTE PELO WHATSAPP 
-# -- CLIENTES QUE COMPRARAM DAS REDES SOCIAIS, VIDEOS POSTADOS, POSTAGENS REALIZADAS 
-# *** ENGAJAMENTO CARROSSEL, ENGAJAMETO VIDEO , ENGAJAMENTO FOTOS , ENGAJAMENTO STORIES 
-# *** INVESTIMENTO MENSAL EM MARKETING DIGITAL , CLIQUES/REAL, VENDAS/REAL
-# *** Taxa de conversão (quantos cliques resultaram em compras). Custo por aquisição (CPA) por canal.
-# -- Horários de maior engajamento (para otimizar posts). Taxa de retenção ou seguidores ativos (não só curtidas).
-# -- Comparativo mês a mês de desempenho das postagens. MENÇOES NAS REDES SOCIAIS 
-
 # Show app title and description.
-st.set_page_config(page_title="Gerenciado de clientes", page_icon="🎫")
-st.title("👤 Gerenciador de perfis de clientes")
+st.set_page_config(page_title="Gerenciador de registros de vendas", page_icon="🎫")
+st.title("👤 Gerenciador de registros de vendas")
 st.write(
     """
-    Este aplicativo é um gerenciador de perfis de clientes. Nele, é possível editar 
-    clientes existentes e ver estatísticas.
+    Este aplicativo é um gerenciador de registros de vendas. Nele, é possível cadastrar 
+    uma nova venda, visualizar vendas existentes e ver estatísticas.
     """
 )
 
@@ -67,11 +49,10 @@ st.header("Resgistra uma nova venda")
 # We're adding tickets via an `st.form` and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_venda"):
-    nome = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
+    nome_cliente = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
+    nome_produto = st.multiselect("Produtos", ["Purina", "Pedigree", "Gran plus", "Royal canin", "Outra marca"])
     data_venda = st.date_input("Data de venda")
     valor_total = st.number_input("Valor total", placeholder="Ex:53,34")
-    valor_unit = st.number_input("Valor Unitário do produto", placeholder="Ex:53,34")
-    produto = st.text_area("Produtos", placeholder="Ex: Ração de gato", height=50, max_chars=50)
     submitted = st.form_submit_button("Submit")
 
 if submitted:

@@ -19,15 +19,18 @@ st.write(
     """
 )
 
+#------------------------------------------------------------------
+# variaveis de formatação
+
 # dataframe content
 data = { 
     "ID": [f"TICKET-{i}" for i in range(1100, 1000, -1)],
     "Categoria": np.random.choice(["Ração seca", "Ração úmida", "Briquedo", "Medicação"], size=100),
     "Subcategoria": np.random.choice(["Imunidade", "Premium", "Super premium"], size=100),
-    "Tipo de Animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
+    "Tipo de animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
     "Porte": np.random.choice(["Grande", "Médio", "Pequeno"], size=100),
     "Idade": np.random.choice(["Filhote", "Adulto"], size=100),
-    "Nome": np.random.choice(["Purina", "Pedigree", "Gran plus", "Royal canin"], size=100),
+    "Nome do produto": np.random.choice(["Purina", "Pedigree", "Gran plus", "Royal canin"], size=100),
     "Descrição": np.random.choice(["Ração de gato adulto gran plus", "Ração de cachorro filhote royal canin"], size=100), 
     "Preço unitário de venda": "R$20",
     "Preço unitário de compra": "R$7",
@@ -53,15 +56,15 @@ st.header("Adicionar um produto")
 # We're adding tickets via an `st.form` and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_produto"):
-    categoria = st.text_area("Categoria", placeholder="Ex: Ração seca", height=50, max_chars=20)
-    subcategoria = st.text_area("Subcategoria", placeholder="Ex: Premium", height=50, max_chars=20)
-    tipo_animal = st.text_area("Tipo de animal", placeholder="Ex: Gato", height=50, max_chars=20)
-    porte = st.text_area("Porte do animal", placeholder="Ex: Pequeno", height=50, max_chars=20)
-    idade = st.text_area("Idade do animal", placeholder="Ex: Filhote ou adulto", height=50, max_chars=20)
-    nome = st.text_area("Nome do produto", placeholder="Ex: Gran plus", height=50, max_chars=20)
-    descricao = st.text_area("Descrição do produto", placeholder="Ex: Ração de gato adulto gran plus", height=50, max_chars=50)
-    preco_venda = st.number_input("Preço unitário de venda", placeholder="Ex: 20")
-    preco_compra = st.number_input("Preço unitário de compra", placeholder="Ex: 7")
+    categoria = st.selectbox("Categoria", ["Ração seca", "Ração úmida", "Briquedo", "Medicação"])
+    subcategoria = st.selectbox("Subcategoria", ["Imunidade", "Premium", "Super premium", "Não possui"])
+    tipo_animal = st.selectbox("Tipo de animal", ["Gato", "Cachorro", "Cavalo", "Peixe"])
+    porte = st.selectbox("Porte", ["Pequeno", "Médio", "Grande"])
+    idade = st.selectbox("Idade", ["Filhote", "Jovem", "Adulto"])
+    nome_produto = st.selectbox("Nome do produto", ["Purina", "Pedigree", "Gran plus", "Royal canin", "Outra marca"])
+    descricao = st.text_area("Descrição", placeholder="Ex: Ração de gato adulto gran plus", height=50, max_chars=50)
+    preco_venda = st.number_input("Preço unitário de venda")
+    preco_compra = st.number_input("Preço unitário de compra")
     submitted = st.form_submit_button("Submit")
 
 if submitted:
@@ -78,10 +81,10 @@ if submitted:
                 "Categoria": categoria,
                 "Subcategoria": subcategoria,
                 "Tipo de animal": tipo_animal,
-                "Porte do animal": porte,
+                "Porte": porte,
                 "Idade": idade,
-                "Nome": nome,
-                "Descrição do produto": descricao,
+                "Nome do produto": nome_produto,
+                "Descrição": descricao,
                 "Preço unitário de venda": preco_venda,
                 "Preço unitário de compra": preco_compra,
                 "Porcentagem de lucro": porcentagem_lucro,
