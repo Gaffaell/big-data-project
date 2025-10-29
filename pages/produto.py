@@ -14,8 +14,8 @@ st.set_page_config(page_title="Gerenciador de produtos", page_icon="🎫")
 st.title("👤 Gerenciador de produtos")
 st.write(
     """
-    Este aplicativo é um gerenciador de produtos. Nele, é possível cadastrar 
-    produtos novos, ver todos os produtos e ver estatísticas.
+    Este aplicativo é um gerenciador de produtos. Nele, é possível cadastrar novos
+    produtos novos e ver todos os produtos.
     """
 )
 
@@ -65,6 +65,7 @@ with st.form("add_produto"):
     descricao = st.text_area("Descrição", placeholder="Ex: Ração de gato adulto gran plus", height=50, max_chars=50)
     preco_venda = st.number_input("Preço unitário de venda")
     preco_compra = st.number_input("Preço unitário de compra")
+    porcentagem_lucro = 0
     submitted = st.form_submit_button("Submit")
 
 if submitted:
@@ -72,7 +73,8 @@ if submitted:
     # state.
     recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1]) # vai pegar o id do banco de dados
     today = datetime.datetime.now().strftime("%d-%m-%Y")
-    porcentagem_lucro = (((preco_venda - preco_compra) * 100) // preco_venda)
+    if preco_compra != 0 and preco_venda != 0:
+        porcentagem_lucro = (((preco_venda - preco_compra) * 100) // preco_venda)
     df = pd.DataFrame(
         [
             {
@@ -94,7 +96,7 @@ if submitted:
     )
 
     # Show a little success message.
-    st.write("Ticket submitted! Here are the ticket details:")
+    st.write("Produto cadastrado! Aqui estão os dados:")
     st.dataframe(df, use_container_width=True, hide_index=True)
     st.session_state.df = pd.concat([df, st.session_state.df], axis=0)
 
@@ -104,7 +106,7 @@ if submitted:
 # cells. The edited data is returned as a new dataframe.
 
 # Show section to view and edit existing tickets in a table.
-st.header("Clientes cadastrados")
+st.header("Produtos cadastrados")
 
 # Show section to view and edit existing tickets in a table.
 #st.info(
@@ -121,47 +123,59 @@ df_new = st.data_editor(
     use_container_width=True,
     hide_index=True,
     # Disable editing the ID and Date Submitted columns.
-    disabled=["ID", "Date Submitted"],
+    disabled=[
+        "ID", "Date Submitted", "Categoria", "Subcategoria", "Tipo de animal",
+        "porte", "idade", "nome do produto", "descrição", "preço unitário de venda",
+        "Preço unitário de compra", "Porcentagem de lucro", 
+    ],
 )
 
 # -------------------------------------------------------------------------------------------------------------
 # parte para mostrar grafico e estatisticas
  # Show some metrics and charts about the ticket.
-st.header("Statistics")
-
+#   st.header("Analíse de dados e gráficos")
+#
 # Show metrics side by side using `st.columns` and `st.metric`.
-col1, col2, col3 = st.columns(3)
-num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
-col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
+#col1, col2, col3 = st.columns(3)
+#num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
+#col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
 #col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
 #col3.metric(label="Average resolution time (hours)", value=16, delta=2)
-
+#
 # Show two Altair charts using `st.altair_chart`.
-st.write("")
-st.write("")
-status_plot = (
-    alt.Chart(edited_df)
-    .mark_bar()
-    .encode(
-        x="month(Date Submitted):O",
-        y="count():Q",
-        xOffset="Status:N",
-        color="Status:N",
-    )
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
-)
-st.altair_chart(status_plot, use_container_width=True, theme="streamlit")
-
-st.write("")
-priority_plot = (
-    alt.Chart(edited_df)
-    .mark_arc()
-    .encode(theta="count():Q", color="Priority:N")
-    .properties(height=300)
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
-)
-st.altair_chart(priority_plot, use_container_width=True, theme="streamlit")
+#   st.write("")
+#   st.write("")
+#   status_plot = (
+#       alt.Chart(df)
+#       .mark_bar()
+#       .encode(
+#           x="month(Date submitted):O",
+#           y="count():Q",
+#           xOffset="Status:N",
+#           color="Status:N",
+#       )
+#       .configure_legend(
+#           orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+#       )
+#   )
+#   st.altair_chart(status_plot, use_container_width=True, theme="streamlit")
+#
+#   st.write("")
+#   priority_plot = (
+#       alt.Chart(df)
+#       .mark_arc()
+#       .encode(theta="count():Q", color="Priority:N")
+#       .properties(height=300)
+#       .configure_legend(
+#           orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+#       )
+#   )
+#   st.altair_chart(priority_plot, use_container_width=True, theme="streamlit")
+#
+#   st.write("")
+#   produtos_plot = (
+#       alt.Chart(df)
+#       .mark_bar()
+#       .encode(x="month(Date submitted)", y="Categoria")
+#   )
+#   st.altair_chart(produtos_plot, use_container_width=True, theme="streamlit")
