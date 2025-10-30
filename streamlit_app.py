@@ -21,7 +21,7 @@ def _login(email: str):
     st.session_state["user"] = email
     st.session_state["display_name"] = email.split("@")[0].title()
     st.session_state.authenticated = True
-    st.switch_page("pages/cliente")
+    st.switch_page("pages/cliente.py")
 
 def _logout():
     for k in ("auth", "user", "display_name"):
