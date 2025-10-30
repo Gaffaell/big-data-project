@@ -20,7 +20,7 @@ data = { # aqui vai dados do banco de dados para mostrar na tela
 
     "Categoria": np.random.choice(["Ração seca", "Ração úmida", "Brinquedo", "Medicação"], size=100),
     "Subcategoria": np.random.choice(["Imunidade", "Premium", "Super premium"], size=100),
-    "Tipo de Animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
+    "Tipo de animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
     "Porte": np.random.choice(["Grande", "Médio", "Pequeno"], size=100),
     "Idade": np.random.choice(["Filhote", "Adulto"], size=100),
     "Date Submitted": [
@@ -48,7 +48,7 @@ df_new = st.data_editor(
 st.header("Analíse de dados e gráficos")
 
 # Show metrics side by side using `st.columns` and `st.metric`.
-st.write("Total de prdoutos de cada categoria:")
+st.write("Total de produtos de cada categoria:")
 
 col1, col2, col3, col4 = st.columns(4)
 num_racao_seca = len(st.session_state.df[st.session_state.df.Categoria == "Ração seca"])
@@ -64,6 +64,7 @@ col4.metric(label="Total de Medicações", value=num_medicacao)
 # Show two Altair charts using `st.altair_chart`.
 st.write("")
 st.write("")
+st.write("* Quantidade de produtos cada categoria")
 categoria_plot = (
     alt.Chart(df)
     .mark_bar()
@@ -71,7 +72,7 @@ categoria_plot = (
         x="Categoria:O",
         y="count():Q",
         #xOffset="Status:N",
-        color="Status:N",
+        color="Categoria:N",
     )
     .configure_legend(
         orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
@@ -79,14 +80,17 @@ categoria_plot = (
 )
 st.altair_chart(categoria_plot, use_container_width=True, theme="streamlit")
 
-st.write("")
-priority_plot = (
+st.write("* Quantidade de produtos de cada tipo de animal")
+tipo_animal_plot = (
     alt.Chart(df)
     .mark_arc()
-    .encode(theta="count():Q", color="Priority:N")
+    .encode(
+        theta="count():Q", 
+        color="Tipo de animal:O"
+    )
     .properties(height=300)
     .configure_legend(
         orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
     )
 )
-st.altair_chart(priority_plot, use_container_width=True, theme="streamlit")
+st.altair_chart(tipo_animal_plot, use_container_width=True, theme="streamlit")
