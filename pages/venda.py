@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-#if "authenticated" not in st.session_state or not st.session_state.authenticated:
-#    st.warning("Você precisa fazer o login para acessar esta página!")
-#    st.stop()
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    st.warning("Você precisa fazer o login para acessar esta página!")
+    st.stop()
 
 # Show app title and description.
 st.set_page_config(page_title="Vendas", page_icon="🎫")

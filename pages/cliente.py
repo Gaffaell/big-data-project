@@ -4,11 +4,10 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 import datetime
 import altair as alt
-from contextlib import contextmanager
+import numpy as np
+import pandas as pd
+import streamlit as st
 
-# ------------------------------------------------------------
-# 🔐 Verificação de login
-# ------------------------------------------------------------
 if "authenticated" not in st.session_state or not st.session_state.authenticated:
     st.warning("Você precisa fazer o login para acessar esta página!")
     st.stop()
