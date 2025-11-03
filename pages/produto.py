@@ -1,121 +1,130 @@
-import datetime
-import random
-
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import datetime
+import altair as alt
+from contextlib import contextmanager
+
+# ------------------------------------------------------------
+# 🔐 Verificação de login
+# ------------------------------------------------------------
 #if "authenticated" not in st.session_state or not st.session_state.authenticated:
 #    st.warning("Você precisa fazer o login para acessar esta página!")
 #    st.stop()
 
-# Show app title and description.
-st.set_page_config(page_title="Gerenciador de produtos", page_icon="🎫")
-st.title("👤 Gerenciador de produtos")
+# ------------------------------------------------------------
+# ⚙️ Configuração da página
+# ------------------------------------------------------------
+st.set_page_config(page_title="Produtos", page_icon="🎫")
+st.title("👤 Gerenciador de Produtos")
 st.write(
     """
-    Este aplicativo é um gerenciador de produtos. Nele, é possível cadastrar novos
-    produtos novos e ver todos os produtos.
+    Este aplicativo é um gerenciador de Produtos conectado ao banco de dados Neon.
+    Aqui é possível visualizar e adicionar produtos em tempo real.
     """
 )
 
-#------------------------------------------------------------------
-# variaveis de formatação
+# ------------------------------------------------------------
+# 🌐 Conexão com o banco de dados Neon PostgreSQL
+# ------------------------------------------------------------
+@contextmanager
+def get_db_connection():
+    """Context manager para gerenciar conexões com o banco"""
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host="ep-frosty-pond-a4wvle05-pooler.us-east-1.aws.neon.tech",
+            dbname="neondb",
+            user="neondb_owner",
+            password="npg_4kcBT1iJmsgw",
+            port="5432",
+            sslmode="require",
+            cursor_factory=RealDictCursor,
+            connect_timeout=10
+        )
+        yield conn
+    except psycopg2.Error as e:
+        st.error(f"Erro na conexão com o banco de dados: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
 
-# dataframe content
-data = { 
-    "ID": [f"{i}" for i in range(1100, 1000, -1)],
-    "Categoria": np.random.choice(["Ração seca", "Ração úmida", "Briquedo", "Medicação"], size=100),
-    "Subcategoria": np.random.choice(["Imunidade", "Premium", "Super premium"], size=100),
-    "Tipo de animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
-    "Porte": np.random.choice(["Grande", "Médio", "Pequeno"], size=100),
-    "Idade": np.random.choice(["Filhote", "Adulto"], size=100),
-    "Nome do produto": np.random.choice(["Purina", "Pedigree", "Gran plus", "Royal canin"], size=100),
-    "Descrição": np.random.choice(["Ração de gato adulto gran plus", "Ração de cachorro filhote royal canin"], size=100), 
-    "Preço unitário de venda": "R$20",
-    "Preço unitário de compra": "R$7",
-    "Porcentagem de lucro": "65%",
-    "Date Submitted": [
-        datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
-        for _ in range(100)
-    ],
-}
-df = pd.DataFrame(data)
+# ------------------------------------------------------------
+# 📦 Funções auxiliares
+# ------------------------------------------------------------
+def carregar_produtos():
+    """Carrega os podutos do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id_produto, nome_produto, descricao, preco_venda, preco_compra, percentual_lucro,
+                    criado_em
+                    FROM produto 
+                    ORDER BY id_produto DESC;
+                """)
+                dados = cur.fetchall()
+                df = pd.DataFrame(dados)
+                return df
+    except Exception as e:
+        st.error(f"Erro ao consultar produtos: {e}")
+        return pd.DataFrame()
 
-# Save the dataframe in session state (a dictionary-like object that persists across
-# page runs). This ensures our data is persisted when the app updates.
-st.session_state.df = df
+def adicionar_produto(nome_produto, descricao, preco_venda, preco_compra):
+    """Adiciona um produto no banco Neon"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO produto
+                    (nome_produto, descricao, preco_venda, preco_compra, criado_em)
+                    VALUES (%s, %s, %s, %s, %s);
+                """, (
+                    nome_produto, 
+                    descricao, 
+                    preco_venda, 
+                    preco_compra, 
+                    datetime.datetime.now(), 
+                ))
+                conn.commit()
+                return True
+    except psycopg2.Error as e:
+        st.error(f"Erro ao adicionar produto: {e}")
+        return False
+    except Exception as e:
+        st.error(f"Erro inesperado: {e}")
+        return False
 
+# ------------------------------------------------------------
+# ➕ Formulário para adicionar um novo produto
+# ------------------------------------------------------------
+st.header("Adicionar um novo produto")
+with st.form("id_produto"):
+    nome_produto = st.text_input("Nome produto", placeholder="Ex: Ração premium de gato")
+    descricao = st.text_input("Descricao", placeholder="Ex: Ração seca completa para gato adulto")
+    preco_venda = st.number_input("Preço de venda")
+    preco_compra = st.number_input("Preço de compra")
+    submitted = st.form_submit_button("Cadastrar produto")
 
-# -------------------------------------------------------------------------------------------------
-# adicionar um novo produto no banco de dados
-
-# Show a section to add a new ticket.
-st.header("Adicionar um produto") 
-
-# We're adding tickets via an `st.form` and some input widgets. If widgets are used
-# in a form, the app will only rerun once the submit button is pressed.
-with st.form("add_produto"):
-    categoria = st.selectbox("Categoria", ["Ração seca", "Ração úmida", "Briquedo", "Medicação"])
-    subcategoria = st.selectbox("Subcategoria", ["Imunidade", "Premium", "Super premium", "Não possui"])
-    tipo_animal = st.selectbox("Tipo de animal", ["Gato", "Cachorro", "Cavalo", "Peixe"])
-    porte = st.selectbox("Porte", ["Pequeno", "Médio", "Grande"])
-    idade = st.selectbox("Idade", ["Filhote", "Jovem", "Adulto"])
-    nome_produto = st.selectbox("Nome do produto", ["Purina", "Pedigree", "Gran plus", "Royal canin", "Outra marca"])
-    descricao = st.text_area("Descrição", placeholder="Ex: Ração de gato adulto gran plus", height=50, max_chars=50)
-    preco_venda = st.number_input("Preço unitário de venda")
-    preco_compra = st.number_input("Preço unitário de compra")
-    porcentagem_lucro = 0
-    submitted = st.form_submit_button("Submit")
-
+# Processa o cadastro
 if submitted:
-    # Make a dataframe for the new ticket and append it to the dataframe in session
-    # state.
-    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1]) # vai pegar o id do banco de dados
-    today = datetime.datetime.now().strftime("%d-%m-%Y")
-    if preco_compra != 0 and preco_venda != 0:
-        porcentagem_lucro = (((preco_venda - preco_compra) * 100) // preco_venda)
-    df = pd.DataFrame(
-        [
-            {
-                "ID": f"{recent_ticket_number+1}", # vai pegar o id do banco de dados
-                "Date Submitted": today,
-                "Categoria": categoria,
-                "Subcategoria": subcategoria,
-                "Tipo de animal": tipo_animal,
-                "Porte": porte,
-                "Idade": idade,
-                "Nome do produto": nome_produto,
-                "Descrição": descricao,
-                "Preço unitário de venda": preco_venda,
-                "Preço unitário de compra": preco_compra,
-                "Porcentagem de lucro": porcentagem_lucro,
-                "Date Submitted": today,
-            }
-        ]
-    )
+    if nome_produto and preco_venda:
+        sucesso = adicionar_produto(nome_produto, descricao, preco_venda, preco_compra)
+        if sucesso:
+            st.success(f"Produto {nome_produto} cadastrado com sucesso!")
+    else:
+        st.error("Preencha pelo menos Nome e Preço de venda para cadastrar.")
 
-    # Show a little success message.
-    st.write("Produto cadastrado! Aqui estão os dados:")
-    st.dataframe(df, use_container_width=True, hide_index=True)
-    st.session_state.df = pd.concat([df, st.session_state.df], axis=0)
-
-# -----------------------------------------------------------------------------------------------------------
-# mostra todos os clientes cadastrados
-
-# Show section to view and edit existing tickets in a table.
+# ------------------------------------------------------------
+# 📋 Mostrar todos os produtos 
+# ------------------------------------------------------------
 st.header("Produtos cadastrados")
+df_produtos = carregar_produtos()
 
-# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
-# cells. The edited data is returned as a new dataframe.
-df_new = st.data_editor(
-    st.session_state.df,
-    use_container_width=True,
-    hide_index=True,
-    # Disable editing the ID and Date Submitted columns.
-    disabled=[
-        "ID", "Date Submitted", "Categoria", "Subcategoria", "Tipo de animal",
-        "porte", "idade", "nome do produto", "descrição", "preço unitário de venda",
-        "Preço unitário de compra", "Porcentagem de lucro", 
-    ],
-)
+if df_produtos.empty:
+    st.info("Nenhum produto cadastrado ainda.")
+else:
+    st.dataframe(df_produtos, use_container_width=True, hide_index=True)
+

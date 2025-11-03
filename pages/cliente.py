@@ -105,11 +105,12 @@ def adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, num
 # ➕ Formulário para adicionar um novo cliente
 # ------------------------------------------------------------
 st.header("Adicionar um novo cliente")
+st.write("Não use . ou - nos campos CPF e CEP")
 with st.form("add_cliente"):
     nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
-    cpf = st.text_input("CPF", placeholder="Ex: 123.456.789-10")
+    cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
     email = st.text_input("Email", placeholder="Ex: cliente@gmail.com")
-    cep = st.text_input("CEP", placeholder="12345-678")
+    cep = st.text_input("CEP", placeholder="12345678")
     endereco = st.text_input("Endereço", placeholder="Ex: Travessa Júlio César")
     complemento = st.text_input("Complemento", placeholder="Ex: Ap 101")
     numero = st.text_input("Número", placeholder="Ex: 78B")
