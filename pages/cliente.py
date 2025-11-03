@@ -7,10 +7,11 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from contextlib import contextmanager
 
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Você precisa fazer o login para acessar esta página!")
-    st.stop()
+#if "authenticated" not in st.session_state or not st.session_state.authenticated:
+#    st.warning("Você precisa fazer o login para acessar esta página!")
+#    st.stop()
 
 # ------------------------------------------------------------
 # ⚙️ Configuração da página
@@ -104,7 +105,7 @@ def adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, num
 # ➕ Formulário para adicionar um novo cliente
 # ------------------------------------------------------------
 st.header("Adicionar um novo cliente")
-st.write("Não use . ou - nos campos CPF e CEP")
+st.write("Não use ponto(.) ou sinal de menos(-) nos campos CPF e CEP")
 with st.form("add_cliente"):
     nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
     cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
