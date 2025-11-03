@@ -6,12 +6,12 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Você precisa fazer o login para acessar esta página!")
-    st.stop()
+#if "authenticated" not in st.session_state or not st.session_state.authenticated:
+#    st.warning("Você precisa fazer o login para acessar esta página!")
+#    st.stop()
 
 # Show app title and description.
-st.set_page_config(page_title="Gerenciador de registros de vendas", page_icon="🎫")
+st.set_page_config(page_title="Vendas", page_icon="🎫")
 st.title("👤 Gerenciador de registros de vendas")
 st.write(
     """
@@ -44,7 +44,7 @@ st.session_state.df = df
 # Show a section to add a new ticket.
 st.header("Resgistra uma nova venda") 
 
-# We're adding tickets via an `st.form` and some input widgets. If widgets are used
+# We're adding tickets via an st.form and some input widgets. If widgets are used
 # in a form, the app will only rerun once the submit button is pressed.
 with st.form("add_venda"):
     nome_cliente = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
@@ -76,7 +76,7 @@ if submitted:
 
 # -----------------------------------------------------------------------------------------------------------
 # mostra todos os clientes cadastrados
-# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# Show the tickets dataframe with st.data_editor. This lets the user edit the table
 # cells. The edited data is returned as a new dataframe.
 
 # Show section to view and edit existing tickets in a table.
@@ -90,7 +90,7 @@ st.header("Vendas cadastradas")
 #
 #"""
 
-# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# Show the tickets dataframe with st.data_editor. This lets the user edit the table
 # cells. The edited data is returned as a new dataframe.
 df_new = st.data_editor(
     st.session_state.df,
@@ -105,14 +105,14 @@ df_new = st.data_editor(
  # Show some metrics and charts about the ticket.
 st.header("Analíse de dados e gráficos")
 
-# Show metrics side by side using `st.columns` and `st.metric`.
+# Show metrics side by side using st.columns and st.metric.
 #col1, col2, col3 = st.columns(3)
 #num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
 #col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
 #col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
 #col3.metric(label="Average resolution time (hours)", value=16, delta=2)
 
-# Show two Altair charts using `st.altair_chart`.
+# Show two Altair charts using st.altair_chart.
 st.write("")
 st.write("* Quantidade de vendas em cada mês:")
 venda_mes_plot = (
