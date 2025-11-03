@@ -5,10 +5,11 @@ import altair as alt
 import numpy as np
 import pandas as pd
 import streamlit as st
+from contextlib import contextmanager
 
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Você precisa fazer o login para acessar esta página!")
-    st.stop()
+#if "authenticated" not in st.session_state or not st.session_state.authenticated:
+#    st.warning("Você precisa fazer o login para acessar esta página!")
+#    st.stop()
 
 # Show app title and description.
 st.set_page_config(page_title="Gerenciador de clientes", page_icon="🎫")
@@ -20,44 +21,87 @@ st.write(
     """
 )
 
-data = { # aqui vai dados do banco de dados para mostrar na tela
-    #"ID": [f"TICKET-{i}" for i in range(1100, 1000, -1)],
-    #"Status": np.random.choice(["Open", "In Progress", "Closed"], size=100),
-    #"Priority": np.random.choice(["High", "Medium", "Low"], size=100),
-    #"Date Submitted": [
-    #    datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
-    #    for _ in range(100)
-    #],
-#       pegar esses dados do banco de dados para montrar na tela
+# ------------------------------------------------------------
+# 🌐 Conexão com o banco de dados Neon PostgreSQL
+# ------------------------------------------------------------
+@contextmanager
+def get_db_connection():
+    """Context manager para gerenciar conexões com o banco"""
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host="ep-frosty-pond-a4wvle05-pooler.us-east-1.aws.neon.tech",
+            dbname="neondb",
+            user="neondb_owner",
+            password="npg_4kcBT1iJmsgw",
+            port="5432",
+            sslmode="require",
+            cursor_factory=RealDictCursor,
+            connect_timeout=10
+        )
+        yield conn
+    except psycopg2.Error as e:
+        st.error(f"Erro na conexão com o banco de dados: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
 
-    "ID": [f"{i}" for i in range(1100, 1000, -1)],
-    "Nome": np.random.choice(["Rafael", "Gabriel", "Daniel", "Miguel"], size=100),
-    "CPF": "123,456,789,12",
-    "Bairro": np.random.choice(["Marambaia", "Sacramenta", "Batista campos", "Reduto"], size=100),
-    "CEP": "12345678",
-    "Endereco": "Rua dos bobos",
-    "Numero": "0",
-    "Email": "rafael@gmail.com",
-    "Date Submitted": [
-        datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
-        for _ in range(100)
-    ],
-}
-df = pd.DataFrame(data)
+# ------------------------------------------------------------
+# 📦 Funções auxiliares
+# ------------------------------------------------------------
+def carregar_clientes():
+    """Carrega os clientes do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id_cliente, cliente_ativo, criado_em, cpf, cep, endereco,
+                           complemento, numero, nome_completo, email
+                    FROM cliente
+                    ORDER BY id_cliente DESC;
+                """)
+                dados = cur.fetchall()
+                df = pd.DataFrame(dados)
+                return df
+    except Exception as e:
+        st.error(f"Erro ao consultar clientes: {e}")
+        return pd.DataFrame()
 
-# Save the dataframe in session state (a dictionary-like object that persists across
-# page runs). This ensures our data is persisted when the app updates.
-st.session_state.df = df
+def adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, numero):
+    """Adiciona um cliente no banco Neon"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO cliente 
+                    (nome_completo, cpf, email, cep, endereco, complemento, numero, criado_em, cliente_ativo)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                """, (
+                    nome_completo, 
+                    cpf, 
+                    email, 
+                    cep, 
+                    endereco, 
+                    complemento, 
+                    numero, 
+                    datetime.datetime.now(), 
+                    True
+                ))
+                conn.commit()
+                return True
+    except psycopg2.Error as e:
+        st.error(f"Erro ao adicionar cliente: {e}")
+        return False
+    except Exception as e:
+        st.error(f"Erro inesperado: {e}")
+        return False
 
-
-# -------------------------------------------------------------------------------------------------
-# adicionar um novo cliente no banco de dados
-
-# Show a section to add a new ticket.
-st.header("Adicionar um novo cliente") 
-
-# We're adding tickets via an `st.form` and some input widgets. If widgets are used
-# in a form, the app will only rerun once the submit button is pressed.
+# ------------------------------------------------------------
+# ➕ Formulário para adicionar um novo cliente
+# ------------------------------------------------------------
+st.header("Adicionar um novo cliente")
+st.write("Não use ponto(.) ou sinal de menos(-) nos campos CPF e CEP")
 with st.form("add_cliente"):
     nome = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
     CPF = st.text_area("CPF", placeholder="Ex: 123.456.789.10", height=50, max_chars=14)
