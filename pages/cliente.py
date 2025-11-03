@@ -1,8 +1,6 @@
-import streamlit as st
-import pandas as pd
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import datetime
+import random
+
 import altair as alt
 import numpy as np
 import pandas as pd
@@ -13,15 +11,13 @@ from contextlib import contextmanager
 #    st.warning("Você precisa fazer o login para acessar esta página!")
 #    st.stop()
 
-# ------------------------------------------------------------
-# ⚙️ Configuração da página
-# ------------------------------------------------------------
+# Show app title and description.
 st.set_page_config(page_title="Gerenciador de clientes", page_icon="🎫")
 st.title("👤 Gerenciador de clientes")
 st.write(
     """
-    Este aplicativo é um gerenciador de perfis de clientes conectado ao banco de dados Neon.
-    Aqui é possível visualizar, adicionar e analisar clientes em tempo real.
+    Este aplicativo é um gerenciador de perfis de clientes. Nele, é possível cadastrar 
+    novos clientes, ver todos os clientes e ver estatísticas.
     """
 )
 
@@ -107,48 +103,113 @@ def adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, num
 st.header("Adicionar um novo cliente")
 st.write("Não use ponto(.) ou sinal de menos(-) nos campos CPF e CEP")
 with st.form("add_cliente"):
-    nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
-    cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
-    email = st.text_input("Email", placeholder="Ex: cliente@gmail.com")
-    cep = st.text_input("CEP", placeholder="12345678")
-    endereco = st.text_input("Endereço", placeholder="Ex: Travessa Júlio César")
-    complemento = st.text_input("Complemento", placeholder="Ex: Ap 101")
-    numero = st.text_input("Número", placeholder="Ex: 78B")
-    submitted = st.form_submit_button("Cadastrar cliente")
+    nome = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
+    CPF = st.text_area("CPF", placeholder="Ex: 123.456.789.10", height=50, max_chars=14)
+    email = st.text_area("Email", placeholder="Ex: cliente@gmail.com", height=50, max_chars=50)
+    bairro = st.text_area("Bairro", placeholder="Ex: marambaia", height=50, max_chars=50)
+    endereco = st.text_area("Endereço", placeholder="Ex: travessa julio cesar", height=50, max_chars=50)
+    CEP = st.text_area("CEP", placeholder="12345-678", height=50, max_chars=9)
+    numero = st.text_area("Numero do endereço", placeholder="Ex: 78B", height=50, max_chars=10)
+    submitted = st.form_submit_button("Submit")
 
-# Processa o cadastro
 if submitted:
-    if nome_completo and cpf and email:
-        sucesso = adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, numero)
-        if sucesso:
-            st.success(f"Cliente {nome_completo} cadastrado com sucesso!")
-    else:
-        st.error("Preencha pelo menos Nome, CPF e Email para cadastrar.")
-
-# ------------------------------------------------------------
-# 📋 Mostrar todos os clientes
-# ------------------------------------------------------------
-st.header("Clientes cadastrados")
-df_clientes = carregar_clientes()
-
-if df_clientes.empty:
-    st.info("Nenhum cliente cadastrado ainda.")
-else:
-    st.dataframe(df_clientes, use_container_width=True, hide_index=True)
-
-# ------------------------------------------------------------
-# 📊 Gráficos e estatísticas
-# ------------------------------------------------------------
-st.header("Análise de dados e gráficos")
-if not df_clientes.empty:
-    st.write("Distribuição de nomes de clientes:")
-    chart_nome = (
-        alt.Chart(df_clientes)
-        .mark_arc()
-        .encode(
-            theta="count():Q",
-            color="nome_completo:N"
-        )
-        .properties(height=300)
+    # Make a dataframe for the new ticket and append it to the dataframe in session
+    # state.
+    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1]) # vai pegar o id do banco de dados
+    today = datetime.datetime.now().strftime("%d-%m-%Y")
+    df = pd.DataFrame(
+        [
+            {
+                "ID": f"{recent_ticket_number+1}", # vai pegar o id do banco de dados
+                "Date Submitted": today,
+                "Nome": nome,
+                "CPF": CPF,
+                "Email": email,
+                "Bairro": bairro,
+                "Endereco": endereco,
+                "CEP": CEP,
+                "Numero": numero,
+                "Date Submitted": today,
+            }
+        ]
     )
-    st.altair_chart(chart_nome, use_container_width=True)
+
+    # Show a little success message.
+    st.write("Clinte cadastrado com sucesso! Aqui estão os dados:")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+    st.session_state.df = pd.concat([df, st.session_state.df], axis=0)
+
+# -----------------------------------------------------------------------------------------------------------
+# mostra todos os clientes cadastrados
+# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# cells. The edited data is returned as a new dataframe.
+
+# Show section to view and edit existing tickets in a table.
+st.header("Clientes cadastrados")
+
+# Show section to view and edit existing tickets in a table.
+#st.info(
+#    "You can edit the tickets by double clicking on a cell. Note how the plots below "
+#    "update automatically! You can also sort the table by clicking on the column headers.",
+#    icon="✍️",
+#
+#"""
+
+# Show the tickets dataframe with `st.data_editor`. This lets the user edit the table
+# cells. The edited data is returned as a new dataframe.
+df_new = st.data_editor(
+    st.session_state.df,
+    use_container_width=True,
+    hide_index=True,
+    # Disable editing the ID and Date Submitted columns.
+    disabled=[
+        "ID", "Date Submitted", "Nome", "CPF", "Email", "Bairro", "Endereco"
+        "CEP", "Numero" 
+        ],
+)
+
+# -------------------------------------------------------------------------------------------------------------
+# parte para mostrar grafico e estatisticas
+ # Show some metrics and charts about the ticket.
+st.header("Analíse de dados e gráficos")
+
+# Show metrics side by side using `st.columns` and `st.metric`.
+#col1, col2, col3 = st.columns(3)
+#num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
+#col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
+#col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
+#col3.metric(label="Average resolution time (hours)", value=16, delta=2)
+
+# Show two Altair charts using `st.altair_chart`.
+st.write("")
+st.write("")
+st.write("* Quantidade de clientes por bairro:")
+clientes_bairro_plot = (
+    alt.Chart(df)
+    .mark_bar()
+    .encode(
+        x="Bairro:O",
+        y="count():Q",
+        xOffset="Status:N",
+        color="Bairro:N",
+    )
+    .configure_legend(
+        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+    )
+)
+st.altair_chart(clientes_bairro_plot, use_container_width=True, theme="streamlit")
+
+st.write("* Quantidade de clientes com o mesmo nome:")
+clientes_nomme_plot = (
+    alt.Chart(df)
+    .mark_arc()
+    .encode(
+        theta="count():Q", 
+        color="Nome:N"
+        )
+    .properties(height=300)
+    .configure_legend(
+        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
+    )
+)
+st.altair_chart(clientes_nomme_plot, use_container_width=True, theme="streamlit")
