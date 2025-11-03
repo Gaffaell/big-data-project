@@ -1,92 +1,54 @@
-import streamlit as st
-import pandas as pd
-import psycopg2
-from psycopg2.extras import RealDictCursor
 import datetime
+import random
+
 import altair as alt
-from contextlib import contextmanager
+import numpy as np
+import pandas as pd
+import streamlit as st
 
-# ------------------------------------------------------------
-# 🔐 Verificação de login
-# ------------------------------------------------------------
-#    if "authenticated" not in st.session_state or not st.session_state.authenticated:
-#        st.warning("Você precisa fazer o login para acessar esta página!")
- #       st.stop()
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    st.warning("Você precisa fazer o login para acessar esta página!")
+    st.stop()
 
-# ------------------------------------------------------------
-# ⚙️ Configuração da página
-# ------------------------------------------------------------
-st.set_page_config(page_title="Estoque", page_icon="🎫")
-st.title("👤 Analíse de estoque cadastrado")
+# Show app title and description.
+st.set_page_config(page_title="Gerenciador de estoque", page_icon="🎫")
+st.title("👤 Gerenciador de estoque")
 st.write(
     """
-    Esta página é dedicada a mostrar o estoque cadastrado no banco de dados
+    Este página é um gerenciador de estoque de produtos. Nele, é possível ver 
+    estoque existentes e ver estatísticas.
     """
 )
 
-# ------------------------------------------------------------
-# 🌐 Conexão com o banco de dados Neon PostgreSQL
-# ------------------------------------------------------------
-@contextmanager
-def get_db_connection():
-    """Context manager para gerenciar conexões com o banco"""
-    conn = None
-    try:
-        conn = psycopg2.connect(
-            host="ep-frosty-pond-a4wvle05-pooler.us-east-1.aws.neon.tech",
-            dbname="neondb",
-            user="neondb_owner",
-            password="npg_4kcBT1iJmsgw",
-            port="5432",
-            sslmode="require",
-            cursor_factory=RealDictCursor,
-            connect_timeout=10
-        )
-        yield conn
-    except psycopg2.Error as e:
-        st.error(f"Erro na conexão com o banco de dados: {e}")
-        raise
-    finally:
-        if conn:
-            conn.close()
+data = { # aqui vai dados do banco de dados para mostrar na tela
 
-# ------------------------------------------------------------
-# 📦 Funções auxiliares
-# ------------------------------------------------------------
-def carregar_estoque():
-    """Carrega o estoque do banco Neon em um DataFrame"""
-    try:
-        with get_db_connection() as conn:
-            with conn.cursor() as cur:
-                cur.execute("""
-                    SELECT id_estoque, categoria, subcategoria, tipo_animal, porte, faixa_etaria, quantidade,
-                           data_atualizacao
-                    FROM estoque 
-                    ORDER BY id_estoque DESC;
-                """)
-                dados = cur.fetchall()
-                df = pd.DataFrame(dados)
-                return df
-    except Exception as e:
-        st.error(f"Erro ao consultar estoque: {e}")
-        return pd.DataFrame()
+    "Categoria": np.random.choice(["Ração seca", "Ração úmida", "Brinquedo", "Medicação"], size=100),
+    "Subcategoria": np.random.choice(["Imunidade", "Premium", "Super premium"], size=100),
+    "Tipo de animal": np.random.choice(["Gato", "Cachorro", "Outros"], size=100), 
+    "Porte": np.random.choice(["Grande", "Médio", "Pequeno"], size=100),
+    "Idade": np.random.choice(["Filhote", "Adulto"], size=100),
+    "Date Submitted": [
+        datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
+        for _ in range(100)
+    ],
+}
+df = pd.DataFrame(data)
 
-# ------------------------------------------------------------
-# 📋 Mostrar todos os clientes
-# ------------------------------------------------------------
-st.header("Estoque cadastratdo")
-df_estoque = carregar_estoque()
+st.session_state.df = df
 
-if df_estoque.empty:
-    st.info("Nenhum cliente cadastrado ainda.")
-else:
-    st.dataframe(df_estoque, use_container_width=True, hide_index=True)
+st.header("Produtos em estoque")
 
-
-# ------------------------------------------------------------
+df_new = st.data_editor(
+    st.session_state.df,
+    use_container_width=True,
+    hide_index=True,
+    # Disable editing the ID and Date Submitted columns.
+    disabled=["ID", "Date Submitted", "Categoria", "Subcategoria", "Tipo de animal",
+              "Porte", "Idade"
+    ],
+)
+# -------------------------------------------------------------------------------------------------------------
 # parte para mostrar grafico e estatisticas
-# ------------------------------------------------------------
-
 st.header("Analíse de dados e gráficos")
 
 # Show metrics side by side using `st.columns` and `st.metric`.

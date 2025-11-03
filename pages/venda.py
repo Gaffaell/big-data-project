@@ -11,7 +11,7 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
     st.stop()
 
 # Show app title and description.
-st.set_page_config(page_title="Vendas", page_icon="🎫")
+st.set_page_config(page_title="Gerenciador de registros de vendas", page_icon="🎫")
 st.title("👤 Gerenciador de registros de vendas")
 st.write(
     """
