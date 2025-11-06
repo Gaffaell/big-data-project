@@ -1,146 +1,185 @@
-import datetime
-import random
-
-import altair as alt
-import numpy as np
-import pandas as pd
 import streamlit as st
+import pandas as pd
+import psycopg2
+from psycopg2.extras import RealDictCursor
+import datetime
+import altair as alt
+from contextlib import contextmanager
 
+# ------------------------------------------------------------
+# 🔐 Verificação de login
+# ------------------------------------------------------------
 #if "authenticated" not in st.session_state or not st.session_state.authenticated:
 #    st.warning("Você precisa fazer o login para acessar esta página!")
 #    st.stop()
 
-# Show app title and description.
+# ------------------------------------------------------------
+# ⚙️ Configuração da página
+# ------------------------------------------------------------
 st.set_page_config(page_title="Vendas", page_icon="🎫")
-st.title("👤 Gerenciador de registros de vendas")
+st.title("👤 Gerenciador de vendas")
 st.write(
     """
-    Este aplicativo é um gerenciador de registros de vendas. Nele, é possível cadastrar 
-    uma nova venda, visualizar vendas existentes e ver estatísticas.
+    Esta página é um gerenciador de vendas.
+    Aqui é possível visualizar, adicionar e analisar as vendas em tempo real.
     """
 )
 
-data = { #       pegar esses dados do banco de dados para montrar na tela
+# ------------------------------------------------------------
+# 🌐 Conexão com o banco de dados Neon PostgreSQL
+# ------------------------------------------------------------
+@contextmanager
+def get_db_connection():
+    """Context manager para gerenciar conexões com o banco"""
+    conn = None
+    try:
+        conn = psycopg2.connect(
+            host="ep-frosty-pond-a4wvle05-pooler.us-east-1.aws.neon.tech",
+            dbname="neondb",
+            user="neondb_owner",
+            password="npg_4kcBT1iJmsgw",
+            port="5432",
+            sslmode="require",
+            cursor_factory=RealDictCursor,
+            connect_timeout=10
+        )
+        yield conn
+    except psycopg2.Error as e:
+        st.error(f"Erro na conexão com o banco de dados: {e}")
+        raise
+    finally:
+        if conn:
+            conn.close()
 
-    "ID": [f"{i}" for i in range(1100, 1000, -1)],
-    "Nome": np.random.choice(["Rafael", "Gabriel", "Daniel", "Miguel"], size=100),
-    "Valor total": np.random.choice([12, 33, 324, 122], size=100), 
-    "Produto": np.random.choice(["Ração de gato", "Ração de cahorro", "Brinquedo de gato", "Brinquedo de cachorro"], size=100),
-    "Date Submitted": [
-        datetime.date(2023, 6, 1) + datetime.timedelta(days=random.randint(0, 182))
-        for _ in range(100)
-    ],
-}
-df = pd.DataFrame(data)
+# ------------------------------------------------------------
+# 📦 Funções auxiliares
+# ------------------------------------------------------------
+def carregar_vendas():
+    """Carrega as vendas do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT log_vendas.acao, log_vendas.detalhe, venda.data_venda, venda.valor_total, venda.meio_compra
+                    FROM log_vendas
+                    JOIN venda on log_vendas.id_venda = venda.id_venda
+                    ORDER BY id_log DESC;
+                """)
+                dados = cur.fetchall()
+                df = pd.DataFrame(dados)
+                return df
+    except Exception as e:
+        st.error(f"Erro ao consultar vendas: {e}")
+        return pd.DataFrame()
 
-# Save the dataframe in session state (a dictionary-like object that persists across
-# page runs). This ensures our data is persisted when the app updates.
-st.session_state.df = df
+def carregar_clientes():
+    """Carrega os clientes do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id_cliente, nome_completo
+                    FROM cliente
+                    order by cliente desc;
+                """)
+                dados = cur.fetchall()
+                lista_clientes = dados
+                return lista_clientes 
+    except Exception as e:
+        st.error(f"Erro ao consultar clientes: {e}")
+        return pd.DataFrame()
 
+def carregar_produtos():
+    """Carrega os produtos do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id_produto, nome_produto, descricao, preco_venda
+                    FROM produto 
+                    order by produto desc;
+                """)
+                dados = cur.fetchall()
+                lista_produtos = dados
+                return lista_produtos 
+    except Exception as e:
+        st.error(f"Erro ao consultar produtos: {e}")
+        return pd.DataFrame()
 
-# -------------------------------------------------------------------------------------------------
-# adicionar um novo cliente no banco de dados
+def adicionar_venda(quantidade, valor_unitario, subtotal):
+    """Adiciona uma venda no banco Neon"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    INSERT INTO item_venda 
+                    (id_produto, quantidade, valor_unitario, subtotal)
+                    VALUES (%s, %s, %s, %s);
 
-# Show a section to add a new ticket.
-st.header("Resgistra uma nova venda") 
+                    INSERT INTO venda
+                    (id_cliente, data_venda, valor_total)
+                    VALUES (%s, %s, %s);
+                """, (
+                    quantidade, 
+                    valor_unitario, 
+                    subtotal, 
+                    datetime.datetime.now(), 
+                    True
+                ))
+                conn.commit()
+                return True
+    except psycopg2.Error as e:
+        st.error(f"Erro ao adicionar venda: {e}")
+        return False
+    except Exception as e:
+        st.error(f"Erro inesperado: {e}")
+        return False
 
-# We're adding tickets via an st.form and some input widgets. If widgets are used
-# in a form, the app will only rerun once the submit button is pressed.
+# ------------------------------------------------------------
+# ➕ Formulário para adicionar um novo cliente
+# ------------------------------------------------------------
+st.header("Adicionar uma nova venda")
+lista_clientes = carregar_clientes()
+lista_produtos = carregar_produtos()
 with st.form("add_venda"):
-    nome_cliente = st.text_area("Nome completo", placeholder="Ex: joão paulo costa", height=50, max_chars=100)
-    nome_produto = st.multiselect("Produto", ["Ração de gato", "Ração de cahorro", "Brinquedo de gato", "Brinquedo de cachorro"])
-    valor_total = st.number_input("Valor total")
-    submitted = st.form_submit_button("Submit")
+    nome_completo = st.selectbox("Nome completo", [entry['nome_completo'] for entry in lista_clientes])
+    produto = st.selectbox("produto", [entry['nome_produto'] for entry in lista_produtos])
+    submitted = st.form_submit_button("Cadastrar venda")
 
+# Processa o cadastro
 if submitted:
-    # Make a dataframe for the new ticket and append it to the dataframe in session
-    # state.
-    recent_ticket_number = int(max(st.session_state.df.ID).split("-")[1]) # vai pegar o id do banco de dados
-    today = datetime.datetime.now().strftime("%d-%m-%Y")
-    df = pd.DataFrame(
-        [
-            {
-                "ID": f"{recent_ticket_number+1}", # vai pegar o id do banco de dados
-                "Nome": nome_cliente,
-                "Valor total": valor_total,
-                "Produto": nome_produto,
-                "Date Submitted": today,
-            }
-        ]
-    )
+    if nome_completo and produto:
+        sucesso = adicionar_venda(nome_completo, produto, email, cep, endereco, complemento, numero)
+        if sucesso:
+            st.success(f"Cliente {nome_completo} cadastrado com sucesso!")
+    else:
+        st.error("Preencha pelo menos Nome, CPF e Email para cadastrar.")
 
-    # Show a little success message.
-    st.write("Venda cadastrada com sucesso! Aqui estão os dados:")
-    st.dataframe(df, use_container_width=True, hide_index=True)
-    st.session_state.df = pd.concat([df, st.session_state.df], axis=0)
+# ------------------------------------------------------------
+# 📋 Mostrar todos os clientes
+# ------------------------------------------------------------
+st.header("Vendas cadastrados")
+df_vendas = carregar_vendas()
 
-# -----------------------------------------------------------------------------------------------------------
-# mostra todos os clientes cadastrados
-# Show the tickets dataframe with st.data_editor. This lets the user edit the table
-# cells. The edited data is returned as a new dataframe.
+if df_vendas.empty:
+    st.info("Nenhuma venda cadastrada ainda.")
+else:
+    st.dataframe(df_vendas, use_container_width=True, hide_index=True)
 
-# Show section to view and edit existing tickets in a table.
-st.header("Vendas cadastradas")
-
-# Show section to view and edit existing tickets in a table.
-#st.info(
-#    "You can edit the tickets by double clicking on a cell. Note how the plots below "
-#    "update automatically! You can also sort the table by clicking on the column headers.",
-#    icon="✍️",
+# ------------------------------------------------------------
+# 📊 Gráficos e estatísticas
+# ------------------------------------------------------------
+#   st.header("Análise de dados e gráficos")
+#   if not df_clientes.empty:
+#       st.write("Distribuição de nomes de clientes:")
+#       chart_nome = (
+#           alt.Chart(df_clientes)
+#           .mark_arc()
+#           .encode(
+#               theta="count():Q",
+#               color="nome_completo:N"
+#           )
+#           .properties(height=300)
+#       )
+#       st.altair_chart(chart_nome, use_container_width=True)
 #
-#"""
-
-# Show the tickets dataframe with st.data_editor. This lets the user edit the table
-# cells. The edited data is returned as a new dataframe.
-df_new = st.data_editor(
-    st.session_state.df,
-    use_container_width=True,
-    hide_index=True,
-    # Disable editing the ID and Date Submitted columns.
-    disabled=["ID", "Date Submitted", "Nome", "Produto", "Data de venda", "valor total"],
-)
-
-# -------------------------------------------------------------------------------------------------------------
-# parte para mostrar grafico e estatisticas
- # Show some metrics and charts about the ticket.
-st.header("Analíse de dados e gráficos")
-
-# Show metrics side by side using st.columns and st.metric.
-#col1, col2, col3 = st.columns(3)
-#num_open_tickets = len(st.session_state.df[st.session_state.df.Bairro == "Marambai"])
-#col1.metric(label="Todos os clientes que moram no bairro marambaia", value=num_open_tickets, delta=10)
-#col2.metric(label="First response time (hours)", value=5.2, delta=-1.5)
-#col3.metric(label="Average resolution time (hours)", value=16, delta=2)
-
-# Show two Altair charts using st.altair_chart.
-st.write("")
-st.write("* Quantidade de vendas em cada mês:")
-venda_mes_plot = (
-    alt.Chart(df)
-    .mark_bar()
-    .encode(
-        x="month(Date Submitted):O",
-        y="count():Q",
-        xOffset="Status:N",
-        color="month(Date Submitted):N",
-    )
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
-)
-st.altair_chart(venda_mes_plot, use_container_width=True, theme="streamlit")
-
-st.write("* O produto que mais vende:")
-venda_produto_plot = (
-    alt.Chart(df)
-    .mark_arc()
-    .encode(
-        theta="count():Q", 
-        color="Produto:N"
-    )
-    .properties(height=300)
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
-)
-st.altair_chart(venda_produto_plot, use_container_width=True, theme="streamlit")
