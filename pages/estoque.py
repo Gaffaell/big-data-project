@@ -20,7 +20,7 @@ st.set_page_config(page_title="Estoque", page_icon="🎫")
 st.title("👤 Analíse de estoque cadastrado")
 st.write(
     """
-    Esta página é dedicada a mostrar o estoque cadastrado no banco de dados
+    Esta página é dedicada a mostrar o estoque cadastrado
     """
 )
 

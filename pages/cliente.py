@@ -16,11 +16,11 @@ if "authenticated" not in st.session_state or not st.session_state.authenticated
 # ------------------------------------------------------------
 # ⚙️ Configuração da página
 # ------------------------------------------------------------
-st.set_page_config(page_title="Gerenciador de clientes", page_icon="🎫")
+st.set_page_config(page_title="Clientes", page_icon="🎫")
 st.title("👤 Gerenciador de clientes")
 st.write(
     """
-    Este aplicativo é um gerenciador de perfis de clientes conectado ao banco de dados Neon.
+    Este aplicativo é um gerenciador de perfis de clientes.
     Aqui é possível visualizar, adicionar e analisar clientes em tempo real.
     """
 )
