@@ -17,7 +17,7 @@ from contextlib import contextmanager
 # ⚙️ Configuração da página
 # ------------------------------------------------------------
 st.set_page_config(page_title="Estoque", page_icon="🎫")
-st.title("👤 Analíse de estoque cadastrado")
+st.title("👤 Analise de estoque cadastrado")
 st.write(
     """
     Esta página é dedicada a mostrar o estoque cadastrado
@@ -65,8 +65,8 @@ def carregar_estoque():
                     ORDER BY id_estoque DESC;
                 """)
                 dados = cur.fetchall()
-                df = pd.DataFrame(dados)
-                return df
+                df_estoque = pd.DataFrame(dados)
+                return df_estoque
     except Exception as e:
         st.error(f"Erro ao consultar estoque: {e}")
         return pd.DataFrame()
@@ -74,11 +74,11 @@ def carregar_estoque():
 # ------------------------------------------------------------
 # 📋 Mostrar todos os clientes
 # ------------------------------------------------------------
-st.header("Estoque cadastratdo")
+st.header("Estoque cadastrado")
 df_estoque = carregar_estoque()
 
 if df_estoque.empty:
-    st.info("Nenhum cliente cadastrado ainda.")
+    st.info("Nenhum estoque cadastrado ainda.")
 else:
     st.dataframe(df_estoque, use_container_width=True, hide_index=True)
 
@@ -89,32 +89,18 @@ else:
 
 st.header("Analíse de dados e gráficos")
 
-# Show metrics side by side using st.columns and st.metric.
-st.write("Total de produtos de cada categoria:")
-
-col1, col2, col3, col4 = st.columns(4)
-num_racao_seca = len(st.session_state.df[st.session_state.df.Categoria == "Ração seca"])
-num_racoa_umida = len(st.session_state.df[st.session_state.df.Categoria == "Ração úmida"])
-num_brinquedo = len(st.session_state.df[st.session_state.df.Categoria == "Brinquedo"])
-num_medicacao = len(st.session_state.df[st.session_state.df.Categoria == "Medicação"])
-
-col1.metric(label="Total de Rações secas", value=num_racao_seca)
-col2.metric(label="Total de Rações úmidas", value=num_racoa_umida)
-col3.metric(label="Total de Brinquedos", value=num_brinquedo)
-col4.metric(label="Total de Medicações", value=num_medicacao)
-
 # Show two Altair charts using st.altair_chart.
 st.write("")
 st.write("")
 st.write("* Quantidade de produtos cada categoria")
 categoria_plot = (
-    alt.Chart(df)
+    alt.Chart(df_estoque)
     .mark_bar()
     .encode(
-        x="Categoria:O",
+        x="categoria:O",
         y="count():Q",
         #xOffset="Status:N",
-        color="Categoria:N",
+        color="categoria:N",
     )
     .configure_legend(
         orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
@@ -124,11 +110,11 @@ st.altair_chart(categoria_plot, use_container_width=True, theme="streamlit")
 
 st.write("* Quantidade de produtos de cada tipo de animal")
 tipo_animal_plot = (
-    alt.Chart(df)
+    alt.Chart(df_estoque)
     .mark_arc()
     .encode(
         theta="count():Q", 
-        color="Tipo de animal:O"
+        color="tipo_animal:O"
     )
     .properties(height=300)
     .configure_legend(
