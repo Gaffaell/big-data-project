@@ -116,7 +116,7 @@ st.title("# Analise de dados de estoque")
 
 st.write("")
 st.write("")
-st.write("* Quantidade de produtos cada categoria")
+st.write("* Quantidade de produtos de cada categoria")
 df_estoque = carregar_estoque()
 categoria_plot = (
     alt.Chart(df_estoque)
