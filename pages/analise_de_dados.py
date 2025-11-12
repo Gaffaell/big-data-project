@@ -149,7 +149,7 @@ tipo_animal_plot = (
 st.altair_chart(tipo_animal_plot, use_container_width=True, theme="streamlit")
 
 # Dados de clientes
-st.title("# Analse de dados de clientes")
+st.title("# Analise de dados de clientes")
 st.write("")
 st.write("")
 st.write("* Quantidade de clientes ativos")
