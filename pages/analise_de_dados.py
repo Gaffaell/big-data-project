@@ -9,15 +9,15 @@ from contextlib import contextmanager
 # ------------------------------------------------------------
 # 🔐 Verificação de login
 # ------------------------------------------------------------
-if "authenticated" not in st.session_state or not st.session_state.authenticated:
-    st.warning("Você precisa fazer o login para acessar esta página!")
-    st.stop()
+#if "authenticated" not in st.session_state or not st.session_state.authenticated:
+#    st.warning("Você precisa fazer o login para acessar esta página!")
+#    st.stop()
 
 # ------------------------------------------------------------
 # ⚙️ Configuração da página
 # ------------------------------------------------------------
-st.set_page_config(page_title="Analise de dados", page_icon="🎫")
-st.title("👤 Analise de dados")
+st.set_page_config(page_title="Análise de dados", page_icon="🎫")
+st.title("👤 Análise de dados")
 st.write(
     """
     Esta página é dediacada à analise de dados.
@@ -82,6 +82,9 @@ def carregar_clientes():
                            complemento, numero, nome_completo, email
                     FROM cliente
                     ORDER BY id_cliente DESC;
+                    SELECT nome_completo, qtd_compras, total_gasto
+                    FROM vw_clientes_frequentes
+                    order BY qtd_compras;
                 """)
                 dados = cur.fetchall()
                 df = pd.DataFrame(dados)
@@ -109,98 +112,114 @@ def carregar_vendas():
         return pd.DataFrame()
 
 # ------------------------------------------------------------
-# ⚙️Visualização de dados e gráficos
+# ⚙️Visualização de dados e gráficos (otimizado)
 # ------------------------------------------------------------
-# Show two Altair charts using st.altair_chart.
-st.title("# Analise de dados de estoque")
+st.title("# Análise de dados de estoque")
+st.write("Esta seção apresenta um resumo visual do estoque atual.")
 
-st.write("")
-st.write("")
-st.write("* Quantidade de produtos de cada categoria")
 df_estoque = carregar_estoque()
+
+# --- Criação dos gráficos ---
 categoria_plot = (
     alt.Chart(df_estoque)
     .mark_bar()
     .encode(
         x="categoria:O",
         y="count():Q",
-        #xOffset="Status:N",
-        color="categoria:N",
+        color="categoria:N"
     )
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
+    .properties(width=300, height=300)
 )
-st.altair_chart(categoria_plot, use_container_width=True, theme="streamlit")
 
-st.write("* Quantidade de produtos de cada tipo de animal")
 tipo_animal_plot = (
     alt.Chart(df_estoque)
     .mark_arc()
     .encode(
-        theta="count():Q", 
-        color="tipo_animal:O"
+        theta="count():Q",
+        color="tipo_animal:N"
     )
-    .properties(height=300)
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
+    .properties(width=250, height=300)
 )
-st.altair_chart(tipo_animal_plot, use_container_width=True, theme="streamlit")
 
-# Dados de clientes
-st.title("# Analise de dados de clientes")
-st.write("")
-st.write("")
-st.write("* Quantidade de clientes ativos")
+# --- Exibição lado a lado ---
+col1, col2 = st.columns(2)
+with col1:
+    st.write("Quantidade de produtos por categoria")
+    st.altair_chart(categoria_plot, use_container_width=False, theme="streamlit")
+
+with col2:
+    st.write("Distribuição por tipo de animal")
+    st.altair_chart(tipo_animal_plot, use_container_width=False, theme="streamlit")
+
+
+# ------------------------------------------------------------
+# Clientes
+# ------------------------------------------------------------
+st.title("# Análise de dados de clientes")
 df_cliente = carregar_clientes()
-tipo_animal_plot = (
+
+clientes_frequentes_plot = (
     alt.Chart(df_cliente)
-    .mark_arc()
-    .encode(
-        theta="count():Q", 
-        color="cliente_ativo:O"
-    )
-    .properties(height=300)
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
-)
-st.altair_chart(tipo_animal_plot, use_container_width=True, theme="streamlit")
-
-# Dados de venda
-st.title("# Analise de dados de vendas")
-
-st.write("")
-st.write("")
-st.write("* Meio de compra mais utilizado")
-df_venda = carregar_vendas()
-categoria_plot = (
-    alt.Chart(df_venda)
     .mark_bar()
     .encode(
-        x="meio_compra:O",
-        y="count():Q",
-        #xOffset="Status:N",
-        color="meio_compra:N",
+        x="nome_completo:O",
+        y="qtd_compras:Q",
+        color="nome_completo:N"
     )
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
+    .properties(width=400, height=300)
 )
-st.altair_chart(categoria_plot, use_container_width=True, theme="streamlit")
 
-st.write("* Valores de cada venda em um certo período")
-tipo_animal_plot = (
-    alt.Chart(df_venda)
-    .mark_line()
+clientes_total_gasto_plot = (
+    alt.Chart(df_cliente)
+    .mark_bar()
     .encode(
-        x="data_venda", 
-        y="valor_total"
+        x="nome_completo:O",
+        y="total_gasto:Q",
+        color="nome_completo:N"
     )
-    .properties(height=300)
-    .configure_legend(
-        orient="bottom", titleFontSize=14, labelFontSize=14, titlePadding=5
-    )
+    .properties(width=400, height=300)
 )
-st.altair_chart(tipo_animal_plot, use_container_width=True, theme="streamlit")
+
+col1, col2 = st.columns(2)
+with col1:
+    st.write("Proporção de clientes mais frequentes")
+    st.altair_chart(clientes_frequentes_plot, use_container_width=False, theme="streamlit")
+
+with col1:
+    st.write("Proporção de gasto total de cada clientes")
+    st.altair_chart(clientes_total_gasto_plot, use_container_width=False, theme="streamlit")
+
+# ------------------------------------------------------------
+# Vendas
+# ------------------------------------------------------------
+st.title("# Análise de dados de vendas")
+df_venda = carregar_vendas()
+
+meio_compra_plot = (
+    alt.Chart(df_venda)
+    .mark_arc()
+    .encode(
+        theta="count():Q",
+        color="meio_compra:N"
+    )
+    .properties(width=300, height=300)
+)
+
+linha_vendas_plot = (
+    alt.Chart(df_venda)
+    .mark_line(point=True)
+    .encode(
+        x="data_venda:T",
+        y="valor_total:Q"
+    )
+    .properties(width=400, height=300)
+)
+
+col1, col2 = st.columns(2)
+with col1:
+    st.write("Meio de compra mais utilizado")
+    st.altair_chart(meio_compra_plot, use_container_width=False, theme="streamlit")
+
+with col2:
+    st.write("Valores das vendas ao longo do tempo")
+    st.altair_chart(linha_vendas_plot, use_container_width=False, theme="streamlit")
