@@ -87,7 +87,7 @@ else:
 # parte para mostrar grafico e estatisticas
 # ------------------------------------------------------------
 
-st.header("Analíse de dados e gráficos")
+st.header("Analise de dados e gráficos")
 
 # Show two Altair charts using st.altair_chart.
 st.write("")
