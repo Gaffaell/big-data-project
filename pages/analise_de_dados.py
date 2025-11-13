@@ -1,3 +1,5 @@
+from re import error
+from typing_extensions import Writer
 import streamlit as st
 import pandas as pd
 import psycopg2
@@ -111,6 +113,24 @@ def carregar_vendas():
         st.error(f"Erro ao consultar vendas: {e}")
         return pd.DataFrame()
 
+def carregar_produtos_mais_vendidos():
+    """Carrega os produtos mais vendidos"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(""" 
+                SELECT nome_produto, total_vendido, receita_total
+                FROM vw_produtos_mais_vendidos
+                ORDER BY total_vendido;
+                """)
+                dados = cur.fetchall()
+                df = pd.DataFrame(dados)
+                return df
+    except Exception as e:
+        st.error(f"Erro ao consultar os produtos mais vendidos: {e}")
+        return pd.DataFrame()
+
+
 # ------------------------------------------------------------
 # ⚙️Visualização de dados e gráficos (otimizado)
 # ------------------------------------------------------------
@@ -186,7 +206,7 @@ with col1:
     st.altair_chart(clientes_frequentes_plot, use_container_width=False, theme="streamlit")
 
 with col1:
-    st.write("Proporção de gasto total de cada clientes")
+    st.write("Proporção de gasto total de cada cliente")
     st.altair_chart(clientes_total_gasto_plot, use_container_width=False, theme="streamlit")
 
 # ------------------------------------------------------------
@@ -215,7 +235,19 @@ linha_vendas_plot = (
     .properties(width=400, height=300)
 )
 
-col1, col2 = st.columns(2)
+df_produtos_mais_vendidos = carregar_produtos_mais_vendidos()
+produtos_mais_vendidos_plot = (
+    alt.Chart(df_produtos_mais_vendidos)
+    .mark_bar()
+    .encode(
+        x="nome_produto:O",
+        y="total_vendido:Q",
+        color="nome_produto:N"
+    )
+    .properties(width=400, height=300)
+)
+
+col1, col2, col3 = st.columns(3)
 with col1:
     st.write("Meio de compra mais utilizado")
     st.altair_chart(meio_compra_plot, use_container_width=False, theme="streamlit")
@@ -223,3 +255,7 @@ with col1:
 with col2:
     st.write("Valores das vendas ao longo do tempo")
     st.altair_chart(linha_vendas_plot, use_container_width=False, theme="streamlit")
+
+with col3:
+    st.write("Produtos mais vendidos")
+    st.altair_chart(produtos_mais_vendidos_plot, use_container_width=False, theme="streamlit")
