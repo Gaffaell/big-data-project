@@ -1,3 +1,4 @@
+from psycopg2.sql import Placeholder
 import streamlit as st
 import pandas as pd
 import psycopg2
@@ -72,23 +73,24 @@ def carregar_clientes():
         st.error(f"Erro ao consultar clientes: {e}")
         return pd.DataFrame()
 
-def adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, numero):
+def adicionar_cliente(nome_completo, cpf, email, telefone, cep, endereco, numero, complemento):
     """Adiciona um cliente no banco Neon"""
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
                     INSERT INTO cliente 
-                    (nome_completo, cpf, email, cep, endereco, complemento, numero, criado_em, cliente_ativo)
+                    (nome_completo, cpf, email, telefone, cep, endereco, numero, complemento, criado_em, cliente_ativo)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     nome_completo, 
                     cpf, 
                     email, 
+                    telefone,
                     cep, 
                     endereco, 
+                    numero,
                     complemento, 
-                    numero, 
                     datetime.datetime.now(), 
                     True
                 ))
@@ -110,16 +112,17 @@ with st.form("add_cliente"):
     nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
     cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
     email = st.text_input("Email", placeholder="Ex: cliente@gmail.com")
+    telefone = st.text_input("Telefone", placeholder="91 998983452")
     cep = st.text_input("CEP", placeholder="12345678")
     endereco = st.text_input("Endereço", placeholder="Ex: Travessa Júlio César")
-    complemento = st.text_input("Complemento", placeholder="Ex: Ap 101")
     numero = st.text_input("Número", placeholder="Ex: 78B")
+    complemento = st.text_input("Complemento", placeholder="Ex: Ap 101")
     submitted = st.form_submit_button("Cadastrar cliente")
 
 # Processa o cadastro
 if submitted:
     if nome_completo and cpf and email:
-        sucesso = adicionar_cliente(nome_completo, cpf, email, cep, endereco, complemento, numero)
+        sucesso = adicionar_cliente(nome_completo, cpf, email, telefone, cep, endereco, numero, complemento)
         if sucesso:
             st.success(f"Cliente {nome_completo} cadastrado com sucesso!")
     else:
@@ -135,20 +138,3 @@ if df_clientes.empty:
     st.info("Nenhum cliente cadastrado ainda.")
 else:
     st.dataframe(df_clientes, use_container_width=True, hide_index=True)
-
-# ------------------------------------------------------------
-# 📊 Gráficos e estatísticas
-# ------------------------------------------------------------
-st.header("Análise de dados e gráficos")
-if not df_clientes.empty:
-    st.write("Distribuição de nomes de clientes:")
-    chart_nome = (
-        alt.Chart(df_clientes)
-        .mark_arc()
-        .encode(
-            theta="count():Q",
-            color="nome_completo:N"
-        )
-        .properties(height=300)
-    )
-    st.altair_chart(chart_nome, use_container_width=True)
