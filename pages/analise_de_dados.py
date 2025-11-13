@@ -286,7 +286,7 @@ categorias_mais_vendidas_plot = (
     .properties(width=400, height=300)
 )
 
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2 = st.columns(2)
 with col1:
     st.write("Meio de compra mais utilizado")
     st.altair_chart(meio_compra_plot, use_container_width=False, theme="streamlit")
@@ -295,14 +295,16 @@ with col2:
     st.write("Valores das vendas ao longo do tempo")
     st.altair_chart(linha_vendas_plot, use_container_width=False, theme="streamlit")
 
-with col3:
+col1, col2 = st.columns(2)
+with col1:
     st.write("Produtos mais vendidos")
     st.altair_chart(produtos_mais_vendidos_plot, use_container_width=False, theme="streamlit")
 
-with col4:
+with col2:
     st.write("Produtos com maior receita total")
     st.altair_chart(produtos_maior_receita_plot, use_container_width=False, theme="streamlit")
 
-with col5:
+col1, col2 = st.columns(2)
+with col1:
     st.write("Categorias mais vendidas")
     st.altair_chart(categorias_mais_vendidas_plot, use_container_width=False, theme="streamlit")
