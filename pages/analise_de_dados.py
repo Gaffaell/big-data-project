@@ -130,6 +130,22 @@ def carregar_produtos_mais_vendidos():
         st.error(f"Erro ao consultar os produtos mais vendidos: {e}")
         return pd.DataFrame()
 
+def carregar_categorias_mais_vendidas ():
+    """Carrega categorias mais vendidos"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute(""" 
+                SELECT categoria, num_vendas, total_itens_vendidos, receita_total
+                FROM vw_vendas_por_categoria
+                ORDER BY num_vendas;
+                """)
+                dados = cur.fetchall()
+                df = pd.DataFrame(dados)
+                return df
+    except Exception as e:
+        st.error(f"Erro ao consultar as categorias mais vendidas: {e}")
+        return pd.DataFrame()
 
 # ------------------------------------------------------------
 # ⚙️Visualização de dados e gráficos (otimizado)
@@ -258,7 +274,19 @@ produtos_maior_receita_plot = (
     .properties(width=400, height=300)
 )
 
-col1, col2, col3, col4 = st.columns(4)
+df_categorias_mais_vendidas = carregar_categorias_mais_vendidas()
+categorias_mais_vendidas_plot = (
+    alt.Chart(df_categorias_mais_vendidas)
+    .mark_bar()
+    .encode(
+        x="categoria:O",
+        y="total_itens_vendidos:Q",
+        color="categoria:N"
+    )
+    .properties(width=400, height=300)
+)
+
+col1, col2, col3, col4, col5 = st.columns(5)
 with col1:
     st.write("Meio de compra mais utilizado")
     st.altair_chart(meio_compra_plot, use_container_width=False, theme="streamlit")
@@ -274,3 +302,7 @@ with col3:
 with col4:
     st.write("Produtos com maior receita total")
     st.altair_chart(produtos_maior_receita_plot, use_container_width=False, theme="streamlit")
+
+with col5:
+    st.write("Categorias mais vendidas")
+    st.altair_chart(categorias_mais_vendidas_plot, use_container_width=False, theme="streamlit")
