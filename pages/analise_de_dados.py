@@ -247,7 +247,18 @@ produtos_mais_vendidos_plot = (
     .properties(width=400, height=300)
 )
 
-col1, col2, col3 = st.columns(3)
+produtos_maior_receita_plot = (
+    alt.Chart(df_produtos_mais_vendidos)
+    .mark_bar()
+    .encode(
+        x="nome_produto:O",
+        y="receita_total:Q",
+        color="nome_produto:N"
+    )
+    .properties(width=400, height=300)
+)
+
+col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.write("Meio de compra mais utilizado")
     st.altair_chart(meio_compra_plot, use_container_width=False, theme="streamlit")
@@ -259,3 +270,7 @@ with col2:
 with col3:
     st.write("Produtos mais vendidos")
     st.altair_chart(produtos_mais_vendidos_plot, use_container_width=False, theme="streamlit")
+
+with col4:
+    st.write("Produtos com maior receita total")
+    st.altair_chart(produtos_maior_receita_plot, use_container_width=False, theme="streamlit")
