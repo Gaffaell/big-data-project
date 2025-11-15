@@ -22,7 +22,7 @@ st.title("👤 Gerenciador de clientes")
 st.write(
     """
     Este aplicativo é um gerenciador de perfis de clientes.
-    Aqui é possível visualizar, adicionar e analisar clientes em tempo real.
+    Aqui é possível visualizar e adicionar clientes em tempo real.
     """
 )
 
@@ -81,7 +81,7 @@ def adicionar_cliente(nome_completo, cpf, email, telefone, cep, endereco, numero
                 cur.execute("""
                     INSERT INTO cliente 
                     (nome_completo, cpf, email, telefone, cep, endereco, numero, complemento, criado_em, cliente_ativo)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s);
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
                 """, (
                     nome_completo, 
                     cpf, 
@@ -112,8 +112,8 @@ with st.form("add_cliente"):
     nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
     cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
     email = st.text_input("Email", placeholder="Ex: cliente@gmail.com")
-    telefone = st.text_input("Telefone", placeholder="91 998983452")
-    cep = st.text_input("CEP", placeholder="12345678")
+    telefone = st.text_input("Telefone", placeholder="Ex: 91 998983452")
+    cep = st.text_input("CEP", placeholder="Ex: 12345678")
     endereco = st.text_input("Endereço", placeholder="Ex: Travessa Júlio César")
     numero = st.text_input("Número", placeholder="Ex: 78B")
     complemento = st.text_input("Complemento", placeholder="Ex: Ap 101")
@@ -121,12 +121,12 @@ with st.form("add_cliente"):
 
 # Processa o cadastro
 if submitted:
-    if nome_completo and cpf and email:
+    if nome_completo and telefone and email:
         sucesso = adicionar_cliente(nome_completo, cpf, email, telefone, cep, endereco, numero, complemento)
         if sucesso:
             st.success(f"Cliente {nome_completo} cadastrado com sucesso!")
     else:
-        st.error("Preencha pelo menos Nome, CPF e Email para cadastrar.")
+        st.error("Preencha pelo menos Nome, telefone e Email para cadastrar.")
 
 # ------------------------------------------------------------
 # 📋 Mostrar todos os clientes
