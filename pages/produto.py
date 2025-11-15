@@ -157,7 +157,9 @@ with st.form("id_produto"):
 
 # Processa o cadastro
 if submitted:
-    if nome_produto and preco_venda:
+    if nome_produto and preco_venda and categoria:
+        df_produtos = carregar_produtos()
+        id_produto = len(df_produtos["id_produto"]) + 4
         sucesso = adicionar_produto(
             nome_produto, descricao, categoria, subcategoria, tipo_animal,
             marca, preco_custo, preco_venda, estoque_minimo, data_fabricacao, 
@@ -166,7 +168,7 @@ if submitted:
         if sucesso:
             st.success(f"Produto {nome_produto} cadastrado com sucesso!")
     else:
-        st.error("Preencha pelo menos Nome e Preço de venda para cadastrar.")
+        st.error("Preencha pelo menos nome, categoria e preço de venda para cadastrar.")
 
 # ------------------------------------------------------------
 # 📋 Mostrar todos os produtos 
