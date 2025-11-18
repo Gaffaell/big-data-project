@@ -10,9 +10,9 @@ from contextlib import contextmanager
 # ------------------------------------------------------------
 # 🔐 Verificação de login
 # ------------------------------------------------------------
-#if "authenticated" not in st.session_state or not st.session_state.authenticated:
-#    st.warning("Você precisa fazer o login para acessar esta página!") 
-#    st.stop()
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    st.warning("Você precisa fazer o login para acessar esta página!")
+    st.stop()
 
 # ------------------------------------------------------------
 # ⚙️ Configuração da página
@@ -181,3 +181,4 @@ if df_produtos.empty:
     st.info("Nenhum produto cadastrado ainda.")
 else:
     st.dataframe(df_produtos, use_container_width=True, hide_index=True)
+
