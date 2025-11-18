@@ -11,9 +11,9 @@ import numpy as np
 # ------------------------------------------------------------
 # 🔐 Verificação de login
 # ------------------------------------------------------------
-#if "authenticated" not in st.session_state or not st.session_state.authenticated:
-#    st.warning("Você precisa fazer o login para acessar esta página!")
-#    st.stop()
+if "authenticated" not in st.session_state or not st.session_state.authenticated:
+    st.warning("Você precisa fazer o login para acessar esta página!")
+    st.stop()
 
 # ------------------------------------------------------------
 # ⚙️ Configuração da página
@@ -1184,4 +1184,5 @@ st.markdown("""
         <p>🐾 <b>Dashboard Pet Shop</b> | Análise em Tempo Real | Dados atualizados automaticamente</p>
         <p style='font-size: 12px;'>Conectado ao banco PostgreSQL - Neon Database</p>
     </div>
+
 """, unsafe_allow_html=True)
