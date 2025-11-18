@@ -21,7 +21,7 @@ st.title("👤 Gerenciador de vendas")
 st.write(
     """
     Esta página é um gerenciador de vendas.
-    Aqui é possível visualizar, adicionar e analisar as vendas em tempo real.
+    Aqui é possível visualizar e adicionar vendas em tempo real.
     """
 )
 
@@ -60,7 +60,8 @@ def carregar_vendas():
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT log_vendas.acao, log_vendas.detalhe, venda.data_venda, venda.valor_total, venda.meio_compra
+                    SELECT log_vendas.acao, log_vendas.detalhe, venda.data_venda, 
+                    venda.valor_total, venda.desconto, venda.meio_compra
                     FROM log_vendas
                     JOIN venda on log_vendas.id_venda = venda.id_venda
                     ORDER BY id_log DESC;
@@ -95,9 +96,8 @@ def carregar_produtos():
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    SELECT id_produto, nome_produto, descricao, preco_venda
-                    FROM produto 
-                    order by produto desc;
+                    SELECT produto.id_produto, produto.nome_produto, produto.descricao, produto.preco_venda
+                    FROM produto;
                 """)
                 dados = cur.fetchall()
                 lista_produtos = dados
@@ -106,25 +106,47 @@ def carregar_produtos():
         st.error(f"Erro ao consultar produtos: {e}")
         return pd.DataFrame()
 
-def adicionar_venda(quantidade, valor_unitario, subtotal):
+def carregar_id_venda():
+    """Carrega os produtos do banco Neon em um DataFrame"""
+    try:
+        with get_db_connection() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT id_venda
+                    FROM venda;
+                """)
+                dados = cur.fetchall()
+                lista_produtos = dados
+                return lista_produtos 
+    except Exception as e:
+        st.error(f"Erro ao consultar produtos: {e}")
+        return pd.DataFrame()
+
+def adicionar_venda(nome_completo, produto, preco_unitario, quantidade, id_cliente, observacoes, meio_compra, total, acao):
     """Adiciona uma venda no banco Neon"""
     try:
         with get_db_connection() as conn:
             with conn.cursor() as cur:
                 cur.execute("""
-                    INSERT INTO item_venda 
-                    (id_produto, quantidade, valor_unitario, subtotal)
-                    VALUES (%s, %s, %s, %s);
-
                     INSERT INTO venda
-                    (id_cliente, data_venda, valor_total)
-                    VALUES (%s, %s, %s);
+                    (id_venda, id_cliente, valor_final, valor_total, meio_compra, observacoes)
+                    VALUES (%s, %s, %s, %s, %s, %s);
+
+                    INSERT INTO item_venda 
+                    (id_venda, id_produto, quantidade, preco_unitario, subtotal)
+                    VALUES (%s, %s, %s, %s, %s);
                 """, (
-                    quantidade, 
-                    valor_unitario, 
-                    subtotal, 
-                    datetime.datetime.now(), 
-                    True
+                    id_venda,
+                    id_cliente,
+                    total,
+                    total,
+                    meio_compra,
+                    observacoes,
+                    id_venda,
+                    id_produto,
+                    quantidade,
+                    preco_unitario,
+                    total,
                 ))
                 conn.commit()
                 return True
@@ -135,25 +157,41 @@ def adicionar_venda(quantidade, valor_unitario, subtotal):
         st.error(f"Erro inesperado: {e}")
         return False
 
-# ------------------------------------------------------------
+# --80----------------------------------------------------------
 # ➕ Formulário para adicionar um novo cliente
 # ------------------------------------------------------------
 st.header("Adicionar uma nova venda")
 lista_clientes = carregar_clientes()
 lista_produtos = carregar_produtos()
+df_id_venda = carregar_id_venda()
 with st.form("add_venda"):
     nome_completo = st.selectbox("Nome completo", [entry['nome_completo'] for entry in lista_clientes])
-    produto = st.selectbox("produto", [entry['nome_produto'] for entry in lista_produtos])
+    produto = st.selectbox("Produto", [entry['nome_produto'] for entry in lista_produtos])
+    preco_unitario = float(
+        next(
+            (p['preco_venda'] for p in lista_produtos if p['nome_produto'] == produto),
+            0
+        )   
+    )
+    quantidade = st.number_input("Quantidade", min_value=1, step=1)
+    id_cliente = next((p['id_cliente'] for p in lista_clientes if p['nome_completo'] == nome_completo),0)   
+    id_produto = next((p['id_produto'] for p in lista_produtos if p['nome_produto'] == produto),0)   
+    observacoes = st.text_input("Observações") 
+    meio_compra = st.selectbox("Meio de compra", ["PIX", "Crédito", "Débito", "Dinheiro"])
+    total = preco_unitario * quantidade
     submitted = st.form_submit_button("Cadastrar venda")
 
 # Processa o cadastro
 if submitted:
-    if nome_completo and produto:
-        sucesso = adicionar_venda(nome_completo, produto, email, cep, endereco, complemento, numero)
+    if nome_completo and produto and quantidade and meio_compra:
+        st.write(f"O seu total é de R$ {total}")
+        id_venda = len(df_id_venda) + 1
+        acao = "VENDA_CRIADA"
+        sucesso = adicionar_venda(nome_completo, produto, preco_unitario, quantidade, id_cliente, observacoes, meio_compra, total, acao)
         if sucesso:
-            st.success(f"Cliente {nome_completo} cadastrado com sucesso!")
+            st.success(f"Venda para {nome_completo} cadastrada com sucesso!")
     else:
-        st.error("Preencha pelo menos Nome, CPF e Email para cadastrar.")
+        st.error("Preencha pelo menos o nome do cliente, produto, quantidade e meio de compra para cadastrar.")
 
 # ------------------------------------------------------------
 # 📋 Mostrar todos os clientes
@@ -165,21 +203,3 @@ if df_vendas.empty:
     st.info("Nenhuma venda cadastrada ainda.")
 else:
     st.dataframe(df_vendas, use_container_width=True, hide_index=True)
-
-# ------------------------------------------------------------
-# 📊 Gráficos e estatísticas
-# ------------------------------------------------------------
-#   st.header("Análise de dados e gráficos")
-#   if not df_clientes.empty:
-#       st.write("Distribuição de nomes de clientes:")
-#       chart_nome = (
-#           alt.Chart(df_clientes)
-#           .mark_arc()
-#           .encode(
-#               theta="count():Q",
-#               color="nome_completo:N"
-#           )
-#           .properties(height=300)
-#       )
-#       st.altair_chart(chart_nome, use_container_width=True)
-#

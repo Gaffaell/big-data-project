@@ -21,7 +21,7 @@ st.set_page_config(page_title="Produtos", page_icon="🎫")
 st.title("👤 Gerenciador de Produtos")
 st.write(
     """
-    Este aplicativo é um gerenciador de Produtos conectado ao banco de dados Neon.
+    Este aplicativo é um gerenciador de Produtos.
     Aqui é possível visualizar e adicionar produtos em tempo real.
     """
 )
