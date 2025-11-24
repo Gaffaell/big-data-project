@@ -107,7 +107,6 @@ def adicionar_cliente(nome_completo, cpf, email, telefone, cep, endereco, numero
 # ➕ Formulário para adicionar um novo cliente
 # ------------------------------------------------------------
 st.header("Adicionar um novo cliente")
-st.write("Não use . ou - nos campos CPF e CEP")
 with st.form("add_cliente"):
     nome_completo = st.text_input("Nome completo", placeholder="Ex: João Paulo Costa")
     cpf = st.text_input("CPF", placeholder="Ex: 12345678910")
@@ -138,3 +137,4 @@ if df_clientes.empty:
     st.info("Nenhum cliente cadastrado ainda.")
 else:
     st.dataframe(df_clientes, use_container_width=True, hide_index=True)
+
